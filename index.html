@@ -35,6 +35,33 @@
         <span data-label-key="firstTimeSetup">প্রথমবার সেটআপ করছেন?</span>
         <a href="#" id="signupLink" data-label-key="signupAsSuperAdmin">Super Admin হিসেবে সাইন-আপ করুন</a>
       </p>
+
+      <!-- Inline forms instead of window.prompt()/alert() — those native
+           dialogs are silently suppressed in some contexts (installed/PWA
+           standalone mode, some in-app/mobile browsers), which looked like
+           "nothing happens when I click". -->
+      <form id="forgotForm" style="display:none;margin-top:14px;border-top:1px solid var(--line);padding-top:14px;">
+        <label data-label-key="email">ইমেইল</label>
+        <input type="email" name="email" required />
+        <div class="btn-row">
+          <button type="submit" class="btn-gold" data-label-key="sendResetLink">রিসেট লিংক পাঠান</button>
+          <button type="button" class="btn-ghost" data-cancel="forgotForm" data-label-key="cancel">বাতিল</button>
+        </div>
+      </form>
+
+      <form id="signupForm" style="display:none;margin-top:14px;border-top:1px solid var(--line);padding-top:14px;">
+        <p class="muted" data-label-key="signupHelp" style="margin-bottom:10px;">শুধু যদি এখনো কোনো Super Admin তৈরি না হয়ে থাকে তবেই এটা কাজ করবে।</p>
+        <label data-label-key="name">নাম</label>
+        <input type="text" name="name" required />
+        <label style="margin-top:10px;" data-label-key="email">ইমেইল</label>
+        <input type="email" name="email" required />
+        <label style="margin-top:10px;" data-label-key="password">পাসওয়ার্ড</label>
+        <input type="password" name="password" minlength="6" required />
+        <div class="btn-row">
+          <button type="submit" class="btn-primary" data-label-key="createSuperAdmin">Super Admin তৈরি করুন</button>
+          <button type="button" class="btn-ghost" data-cancel="signupForm" data-label-key="cancel">বাতিল</button>
+        </div>
+      </form>
     </div>
   </div>
 

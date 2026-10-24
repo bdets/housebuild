@@ -74,6 +74,9 @@ const DICT = {
   forgotPassword: { bn: "পাসওয়ার্ড ভুলে গেছেন?", en: "Forgot password?" },
   firstTimeSetup: { bn: "প্রথমবার সেটআপ করছেন?", en: "Setting up for the first time?" },
   signupAsSuperAdmin: { bn: "Super Admin হিসেবে সাইন-আপ করুন", en: "Sign up as Super Admin" },
+  sendResetLink: { bn: "রিসেট লিংক পাঠান", en: "Send Reset Link" },
+  createSuperAdmin: { bn: "Super Admin তৈরি করুন", en: "Create Super Admin" },
+  signupHelp: { bn: "শুধু যদি এখনো কোনো Super Admin তৈরি না হয়ে থাকে তবেই এটা কাজ করবে।", en: "This only works if no Super Admin has been created yet." },
   directorOnlyPage: { bn: "এই পাতাটি শুধু Director/Super Admin-এর জন্য।", en: "This page is for Director/Super Admin only." },
   noModuleAccess: { bn: "এই মডিউলে তোমার অ্যাক্সেস নেই — Director-এর সাথে যোগাযোগ করো।", en: "You don't have access to this module — contact your Director." },
 

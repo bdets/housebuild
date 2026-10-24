@@ -55,6 +55,18 @@ export async function render(root, identity) {
             : "একটা র‍্যান্ডম পাসওয়ার্ড অটো-জেনারেট হবে — তৈরি হওয়ার পর স্ক্রিনে দেখাবে, কপি করে সংশ্লিষ্ট ব্যক্তিকে জানিয়ে দাও (অথবা সে নিজে \"পাসওয়ার্ড রিসেট\" লিংক দিয়ে বদলে নিতে পারবে)।"
         }</p>
       </form>
+      <div id="newAccountReveal" class="panel" style="display:none;margin-top:14px;background:var(--gold-soft);border-color:var(--gold);">
+        <h3>${en ? "Account created — copy these now" : "অ্যাকাউন্ট তৈরি হয়েছে — এখনই কপি করে রাখো"}</h3>
+        <p class="muted" style="margin-bottom:8px;">${en ? "This won't be shown again." : "এটা আর পরে এখান থেকে দেখা যাবে না।"}</p>
+        <div class="form-grid">
+          <div><label>${t("email")}</label><input type="text" id="revealEmail" readonly /></div>
+          <div><label>${t("password")}</label><input type="text" id="revealPassword" readonly /></div>
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn-gold" id="copyCredsBtn">${en ? "Copy both" : "দুটোই কপি করো"}</button>
+          <button type="button" class="btn-ghost" id="closeRevealBtn">${t("close")}</button>
+        </div>
+      </div>
     </div>
 
     <div class="panel">
@@ -152,21 +164,33 @@ export async function render(root, identity) {
       }
       await setDoc(doc(db, "users", newUid), profile);
       toast(en ? "Account created." : "অ্যাকাউন্ট তৈরি হয়েছে।");
-      alert(
-        (en ? "Account created.\n\nEmail: " : "অ্যাকাউন্ট তৈরি হয়েছে।\n\nইমেইল: ") +
-          fd.get("email") +
-          (en ? "\nPassword: " : "\nপাসওয়ার্ড: ") +
-          password +
-          (en
-            ? "\n\nWrite/copy this down now — it won't be shown again."
-            : "\n\nএটা এখনই লিখে/কপি করে রাখো — পরে আর এখান থেকে দেখা যাবে না।")
-      );
+
+      document.getElementById("revealEmail").value = fd.get("email");
+      document.getElementById("revealPassword").value = password;
+      const revealBox = document.getElementById("newAccountReveal");
+      revealBox.style.display = "block";
+      revealBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
       e.target.reset();
       toggleFields();
       loadUsers();
     } catch (err) {
       toast(err.message || (en ? "Failed." : "ব্যর্থ হয়েছে।"), true);
     }
+  });
+
+  document.getElementById("copyCredsBtn").addEventListener("click", async () => {
+    const email = document.getElementById("revealEmail").value;
+    const password = document.getElementById("revealPassword").value;
+    try {
+      await navigator.clipboard.writeText(`Email: ${email}\nPassword: ${password}`);
+      toast(en ? "Copied." : "কপি হয়েছে।");
+    } catch (err) {
+      toast(en ? "Couldn't copy — select and copy manually." : "কপি করা যায়নি — সিলেক্ট করে ম্যানুয়ালি কপি করো।", true);
+    }
+  });
+  document.getElementById("closeRevealBtn").addEventListener("click", () => {
+    document.getElementById("newAccountReveal").style.display = "none";
   });
 
   loadUsers();

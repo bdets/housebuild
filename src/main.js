@@ -66,26 +66,51 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
   }
 });
 
-document.getElementById("forgotLink").addEventListener("click", async (ev) => {
+// ---- inline forms instead of window.prompt()/alert() (see index.html
+// comment — native dialogs can be silently suppressed, especially in
+// installed/PWA standalone mode) ----
+function showForm(id) {
+  ["forgotForm", "signupForm"].forEach((otherId) => {
+    document.getElementById(otherId).style.display = otherId === id ? "block" : "none";
+  });
+}
+
+document.getElementById("forgotLink").addEventListener("click", (ev) => {
   ev.preventDefault();
-  const email = prompt(getLang() === "en" ? "Enter your email — a reset link will be sent:" : "তোমার ইমেইল দাও — একটা পাসওয়ার্ড রিসেট লিংক পাঠানো হবে:");
-  if (!email) return;
+  showForm("forgotForm");
+});
+
+document.getElementById("signupLink").addEventListener("click", (ev) => {
+  ev.preventDefault();
+  showForm("signupForm");
+});
+
+document.querySelectorAll("[data-cancel]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.getElementById(btn.dataset.cancel).style.display = "none";
+  });
+});
+
+document.getElementById("forgotForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = new FormData(e.target).get("email");
   try {
     await requestPasswordReset(email);
     toast(getLang() === "en" ? "Reset link sent to your email." : "রিসেট লিংক ইমেইলে পাঠানো হয়েছে।");
+    e.target.reset();
+    showForm(null);
   } catch (err) {
     toast(getLang() === "en" ? "Couldn't send — check the email address." : "পাঠানো যায়নি — ইমেইলটা চেক করো।", true);
   }
 });
 
-document.getElementById("signupLink").addEventListener("click", async (ev) => {
-  ev.preventDefault();
+document.getElementById("signupForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
   const en = getLang() === "en";
-  const email = prompt(en ? "Enter your email:" : "তোমার ইমেইল দাও:");
-  if (!email) return;
-  const password = prompt(en ? "Choose a password (6+ characters):" : "একটা পাসওয়ার্ড দাও (কমপক্ষে ৬ অক্ষর):");
-  if (!password) return;
-  const name = prompt(en ? "Your name:" : "তোমার নাম দাও:") || "Super Admin";
+  const fd = new FormData(e.target);
+  const email = fd.get("email");
+  const password = fd.get("password");
+  const name = fd.get("name") || "Super Admin";
   try {
     await createUserWithEmailAndPassword(auth, email, password);
     await claimSuperAdminIfVacant(name);
