@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="manifest" href="./manifest.json" />
+<meta name="theme-color" content="#15342E" />
+<title>লগইন</title>
+<link rel="stylesheet" href="./src/style.css" />
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="btn-row" style="margin-bottom:14px;">
+        <button type="button" class="btn-ghost lang-btn" data-lang="bn" style="padding:4px 10px;flex:1;">বাংলা</button>
+        <button type="button" class="btn-ghost lang-btn" data-lang="en" style="padding:4px 10px;flex:1;">English</button>
+      </div>
+      <img id="orgLogo" src="" alt="logo" style="display:none;width:64px;height:64px;object-fit:cover;border-radius:10px;margin:0 auto 10px;" />
+      <h1 class="org-name" id="orgName">…</h1>
+      <div class="org-address" id="orgAddress"></div>
+      <div id="expiryNotice" class="muted" style="display:none;margin-bottom:10px;color:var(--danger);"></div>
+
+      <form id="loginForm">
+        <label data-label-key="email">ইমেইল</label>
+        <input type="email" name="email" required />
+        <label style="margin-top:10px;" data-label-key="password">পাসওয়ার্ড</label>
+        <input type="password" name="password" required />
+        <div class="btn-row">
+          <button type="submit" class="btn-primary" data-label-key="loginTitle">লগইন</button>
+        </div>
+      </form>
+
+      <p class="muted" style="margin-top:14px;"><a href="#" id="forgotLink" data-label-key="forgotPassword">পাসওয়ার্ড ভুলে গেছেন?</a></p>
+      <p class="muted">
+        <span data-label-key="firstTimeSetup">প্রথমবার সেটআপ করছেন?</span>
+        <a href="#" id="signupLink" data-label-key="signupAsSuperAdmin">Super Admin হিসেবে সাইন-আপ করুন</a>
+      </p>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
