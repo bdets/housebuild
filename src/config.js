@@ -7,6 +7,7 @@
 //  That's why it's fine to commit this directly to GitHub, unlike
 //  a real secret (a database password, a private API key, etc).
 // ============================================================
+
 export const FIREBASE_CONFIG = {
   apiKey: "AIzaSyAuidN16-av7A7wWrx7qTp-U0kwLURXo7E",
   authDomain: "buildhousing.firebaseapp.com",
@@ -16,6 +17,8 @@ export const FIREBASE_CONFIG = {
   appId: "1:275308616542:web:954d8de5fad627caec8dcf"
 };
 
+// Default org info shown before Settings has ever been saved (Settings,
+// once used, overrides this from Firestore — see src/org-store.js).
 export const DEFAULT_ORG = {
   name: "Darul Barakah",
   tagline: "House of Blessings",

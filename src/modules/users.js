@@ -7,8 +7,9 @@ const MODULE_OPTIONS = [
   { key: "deposits", bn: "ডিপোজিট / কিস্তি", en: "Deposits / Installments" },
   { key: "costs", bn: "খরচ / ব্যয়", en: "Costs / Expenses" },
   { key: "vouchers", bn: "ভাউচার / চেক", en: "Vouchers / Cheques" },
-  { key: "notices", bn: "নোটিশ", en: "Notices" },
+  { key: "notices", bn: "নোটিশ / মিটিং & আদার্স", en: "Notices / Meeting & Others" },
   { key: "reports", bn: "রিপোর্ট (জেনারেট + জমা, অনুমোদন ছাড়া)", en: "Reports (generate + submit, no approval power)" },
+  { key: "posts", bn: "পোস্টস (ট্রান্সফার বিল / ক্যাশ ভাউচার)", en: "Posts (Transfer Bill / Cash Voucher)" },
   { key: "messages", bn: "বার্তা", en: "Messages" },
 ];
 

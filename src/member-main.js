@@ -18,6 +18,14 @@ guardPage(["member"], async (identity) => {
     /* composite index may still be building right after first deploy */
   }
 
+  let posts = [];
+  try {
+    const pSnap = await getDocs(query(collection(db, "posts"), orderBy("createdAt", "desc")));
+    posts = pSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  } catch (e) {
+    /* non-fatal */
+  }
+
   let notices = [];
   try {
     const snap = await getDocs(
@@ -74,6 +82,20 @@ guardPage(["member"], async (identity) => {
                 (n) => `<div style="margin-bottom:12px;border-bottom:1px solid var(--line);padding-bottom:10px;">
                 <strong>${n.title}</strong> <span class="muted">· ${fmtDate(n.createdAt)}</span>
                 <p style="margin:6px 0 0;">${n.body}</p>
+              </div>`
+              )
+              .join("")}</div>`
+          : ""
+      }
+
+      ${
+        posts.length
+          ? `<div class="panel"><h2>${t("postsGroup")}</h2>${posts
+              .map(
+                (p) => `<div style="margin-bottom:12px;border-bottom:1px solid var(--line);padding-bottom:10px;">
+                <strong>${p.title}</strong> <span class="muted">· ${p.category === "transferbill" ? t("transferBill") : t("cashVoucherPost")} · ${fmtDate(p.createdAt)}</span>
+                ${p.description ? `<p style="margin:6px 0;">${p.description}</p>` : ""}
+                <a href="${p.driveLink}" target="_blank" rel="noopener" class="btn-gold" style="text-decoration:none;padding:6px 14px;display:inline-block;margin-top:4px;">${t("openLink")}</a>
               </div>`
               )
               .join("")}</div>`

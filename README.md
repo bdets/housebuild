@@ -133,6 +133,42 @@ messages/{id}   { fromUid, fromName, text, status, replies: [...], createdAt }
 - `src/config.js`, `.gitignore` — see `SETUP-BANGLA.md` for the full
   deploy walkthrough (GitHub Pages, no build step)
 
+## v2.2 additions — nav restructure, more reports, Posts
+
+- **Sidebar is now a 3-group accordion**: ড্যাশবোর্ড, then **ENTRY SYSTEM**
+  (Deposit Entry, Deposit List, Cost Entry, Cost Entry List, Voucher Entry —
+  entry and list are now separate pages), **REPORTS** (nested Income /
+  Expenses / Others subgroups), **POSTS** (Meeting & Others — the renamed
+  Notices module, Transfer Bill, Cash Voucher), then Users / Report
+  Approval / Messages / Backup / Settings. Built with native `<details>`
+  elements — collapsed by default, click to expand, no extra JS state
+  needed.
+- **8 new report types** under Reports (`src/modules/statements.js`,
+  `src/reports.js`, `src/print.js`): Item Wise Cost Indv. (drill into one
+  cost item's individual entries), Total Cost Statement (full cost ledger),
+  All Benefi. Pays (costs grouped by beneficiary), Indv. Benefi. Pay (one
+  beneficiary's payment history), Assets & Liabilities (balance-sheet
+  view), Deposits & Dues (a simpler cut of the balance summary) — on top of
+  the 4 already built. Every report has an A4 PDF download.
+- **Set Installments** and **Work Items List** (`src/modules/
+  installments-config.js`, `work-items-config.js`, `src/config-lists.js`):
+  the installment-plan steps and cost-item dropdown are no longer hardcoded
+  — Director/an Admin with the right module can add/edit/remove them, and
+  Deposit Entry / Cost Entry read the live list. The installment field
+  stays free-text with datalist suggestions (the configured steps plus
+  whatever's actually been typed before), since the real data has
+  irregular/partial labels the strict original three-step list didn't fit.
+- **Posts module** (`src/modules/posts.js`, new `posts` Firestore
+  collection + `posts` permission module): Transfer Bill and Cash Voucher
+  are both just title + description + a Google Drive link, shown as cards
+  to every signed-in person (staff and members) — for publishing scanned
+  receipts/vouchers kept in an external Drive folder, rather than storing
+  files in the app itself.
+- `firestore.rules` updated throughout: `config/installmentPlan` and
+  `config/costItems` are writable by the module they feed (not just
+  director), `vouchers`/`cheques` are now also readable (not writable) by
+  anyone with the `reports` module, and a new `posts` collection rule.
+
 ## v2.1 additions
 
 - **Smooth SPA navigation** — the admin sidebar mounts once; clicking a nav

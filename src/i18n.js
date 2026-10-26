@@ -175,6 +175,51 @@ const DICT = {
   downloadPdf: { bn: "A4 PDF ডাউনলোড", en: "Download A4 PDF" },
   grandTotal: { bn: "সর্বমোট", en: "Grand Total" },
   pickMember: { bn: "-- একজন সদস্য বেছে নিন --", en: "-- Pick a member --" },
+
+  // nav groups (v2.2 restructure)
+  entrySystem: { bn: "এন্ট্রি সিস্টেম", en: "Entry System" },
+  depositEntry: { bn: "ডিপোজিট এন্ট্রি", en: "Deposit Entry" },
+  depositList: { bn: "ডিপোজিট লিস্ট", en: "Deposit List" },
+  costEntry: { bn: "কস্ট এন্ট্রি", en: "Cost Entry" },
+  costEntryList: { bn: "কস্ট এন্ট্রি লিস্ট", en: "Cost Entry List" },
+  voucherEntry: { bn: "ভাউচার এন্ট্রি", en: "Voucher Entry" },
+  reportsGroup: { bn: "রিপোর্টস", en: "Reports" },
+  incomeGroup: { bn: "ইনকাম", en: "Income" },
+  expensesGroup: { bn: "এক্সপেন্সেস", en: "Expenses" },
+  othersGroup: { bn: "আদার্স", en: "Others" },
+  itemWiseCostIndv: { bn: "আইটেম-ওয়াইজ কস্ট ইনডিভ.", en: "Item Wise Cost Indv." },
+  totalCostStatement: { bn: "টোটাল কস্ট স্টেটমেন্ট", en: "Total Cost Statement" },
+  workItemsList: { bn: "ওয়ার্ক আইটেমস লিস্ট", en: "Work Items List" },
+  allBenefiPays: { bn: "অল বেনিফি. পেইজ", en: "All Benefi. Pays" },
+  indvBenefiPay: { bn: "ইনডিভ. বেনিফি. পে", en: "Indv. Benefi. Pay" },
+  setInstallments: { bn: "সেট ইনস্টলমেন্টস", en: "Set Installments" },
+  depositsDues: { bn: "ডিপোজিটস অ্যান্ড ডিউজ", en: "Deposits & Dues" },
+  cashVoucherReport: { bn: "ক্যাশ ভাউচার (রিপোর্ট)", en: "Cash Voucher (Report)" },
+  postsGroup: { bn: "পোস্টস", en: "Posts" },
+  meetingOthers: { bn: "মিটিং & আদার্স", en: "Meeting & Others" },
+  transferBill: { bn: "ট্রান্সফার বিল", en: "Transfer Bill" },
+  cashVoucherPost: { bn: "ক্যাশ ভাউচার", en: "Cash Voucher" },
+
+  // Set Installments / Work Items List config pages
+  installmentSteps: { bn: "কিস্তির ধাপসমূহ", en: "Installment Steps" },
+  stepName: { bn: "ধাপের নাম", en: "Step Name" },
+  targetAmount: { bn: "টার্গেট অ্যামাউন্ট", en: "Target Amount" },
+  addStep: { bn: "ধাপ যোগ করুন", en: "Add Step" },
+  workItems: { bn: "খরচের আইটেম তালিকা", en: "Cost Items" },
+  itemName: { bn: "আইটেমের নাম", en: "Item Name" },
+  addItem: { bn: "আইটেম যোগ করুন", en: "Add Item" },
+  noItemsYet: { bn: "এখনো কোনো আইটেম যোগ করা হয়নি।", en: "No items added yet." },
+
+  // Posts module
+  newPost: { bn: "নতুন পোস্ট", en: "New Post" },
+  driveLink: { bn: "Google Drive লিংক", en: "Google Drive Link" },
+  openLink: { bn: "লিংক খুলুন", en: "Open Link" },
+  noPostsYet: { bn: "এখনো কোনো পোস্ট নেই।", en: "No posts yet." },
+
+  // misc new report labels
+  beneficiary2: { bn: "প্রাপক", en: "Beneficiary" },
+  pickItem: { bn: "-- একটা আইটেম বেছে নিন --", en: "-- Pick an item --" },
+  pickBeneficiary: { bn: "-- একজন প্রাপক বেছে নিন --", en: "-- Pick a beneficiary --" },
 };
 
 let lang = (typeof localStorage !== "undefined" && localStorage.getItem("lang")) || "bn";

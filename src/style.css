@@ -69,6 +69,24 @@ a { color: var(--teal-soft); }
 .sidebar-nav a:hover { background: rgba(255,255,255,.06); color: #fff; }
 .sidebar-nav a.active { background: rgba(169,128,59,.18); border-left-color: var(--gold); color: #fff; }
 
+/* accordion groups (Entry System / Reports / Posts, and nested Income/Expenses/Others) */
+.sidebar-nav details { border-left: 3px solid transparent; }
+.sidebar-nav details > summary {
+  list-style: none; cursor: pointer; user-select: none;
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 18px; color: #CBD8D1; font-size: .92rem; font-weight: 600;
+}
+.sidebar-nav details > summary::-webkit-details-marker { display: none; }
+.sidebar-nav details > summary::after {
+  content: "›"; margin-left: auto; transition: transform .15s ease; font-size: 1.1rem; opacity: .7;
+}
+.sidebar-nav details[open] > summary::after { transform: rotate(90deg); }
+.sidebar-nav details > summary:hover { background: rgba(255,255,255,.06); color: #fff; }
+.sidebar-nav .nav-group-body { display: flex; flex-direction: column; }
+.sidebar-nav .nav-group .nav-group-body > a { padding-left: 34px; font-size: .88rem; }
+.sidebar-nav .nav-subgroup > summary { padding-left: 34px; font-size: .85rem; font-weight: 600; opacity: .9; }
+.sidebar-nav .nav-subgroup .nav-group-body > a { padding-left: 50px; font-size: .85rem; }
+
 .sidebar-foot { padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.12); font-size: .85rem; }
 .sidebar-foot button { width: 100%; }
 

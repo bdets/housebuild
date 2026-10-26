@@ -302,3 +302,215 @@ export function printThermalReceipt({ deposit, member, voucherNo }) {
   win.focus();
   setTimeout(() => win.print(), 300);
 }
+
+// ---------------------------------------------------------------
+// A4 — the rest of the "Reports" family (v2.2 nav restructure)
+// ---------------------------------------------------------------
+
+function dateRangeLine(doc, pageWidth, y, startDate, endDate) {
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text(`${startDate ? fmtDate(startDate) : "…"}  to  ${endDate ? fmtDate(endDate) : "…"}`, pageWidth / 2, y, { align: "center" });
+  return y + 6;
+}
+
+export function exportTotalCostStatementPDF({ rows, grandTotal, startDate, endDate }) {
+  const JsPDF = getJsPDF();
+  const doc = new JsPDF({ unit: "mm", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  let y = addLetterhead(doc, pageWidth);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("Total Cost Statement", pageWidth / 2, y, { align: "center" });
+  y = dateRangeLine(doc, pageWidth, y + 7, startDate, endDate);
+
+  doc.autoTable({
+    startY: y,
+    head: [["Date", "Item", "Beneficiary", "Method", "Cheque/Chalan", "Amount", "Remarks"]],
+    body: rows.map((c) => [
+      fmtDate(c.date),
+      c.item || "",
+      c.beneficiary || "",
+      c.paymentMethod || "",
+      c.chequeNo || c.chalanNo || "—",
+      money(c.amount),
+      c.remarks || "",
+    ]),
+    foot: [["", "", "", "", "Grand Total", money(grandTotal), ""]],
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [21, 52, 46] },
+    footStyles: { fillColor: [241, 230, 204], textColor: [21, 52, 46], fontStyle: "bold" },
+    margin: { left: 12, right: 12 },
+  });
+  doc.save("total-cost-statement.pdf");
+}
+
+export function exportItemWiseIndividualPDF({ item, rows, grandTotal, startDate, endDate }) {
+  const JsPDF = getJsPDF();
+  const doc = new JsPDF({ unit: "mm", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  let y = addLetterhead(doc, pageWidth);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(`Item Wise Cost — ${item}`, pageWidth / 2, y, { align: "center" });
+  y = dateRangeLine(doc, pageWidth, y + 7, startDate, endDate);
+
+  doc.autoTable({
+    startY: y,
+    head: [["Date", "Beneficiary", "Method", "Amount", "Remarks"]],
+    body: rows.map((c) => [fmtDate(c.date), c.beneficiary || "", c.paymentMethod || "", money(c.amount), c.remarks || ""]),
+    foot: [["", "", "Grand Total", money(grandTotal), ""]],
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [21, 52, 46] },
+    footStyles: { fillColor: [241, 230, 204], textColor: [21, 52, 46], fontStyle: "bold" },
+    margin: { left: 15, right: 15 },
+  });
+  doc.save(`item-wise-cost-${item.replace(/\s+/g, "_")}.pdf`);
+}
+
+export function exportAllBeneficiaryPaymentsPDF({ rows, grandTotal, startDate, endDate }) {
+  const JsPDF = getJsPDF();
+  const doc = new JsPDF({ unit: "mm", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  let y = addLetterhead(doc, pageWidth);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("All Beneficiary Payments", pageWidth / 2, y, { align: "center" });
+  y = dateRangeLine(doc, pageWidth, y + 7, startDate, endDate);
+
+  doc.autoTable({
+    startY: y,
+    head: [["Beneficiary", "Total Paid"]],
+    body: rows.map((r) => [r.beneficiary, money(r.amount)]),
+    foot: [["Grand Total", money(grandTotal)]],
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [21, 52, 46] },
+    footStyles: { fillColor: [241, 230, 204], textColor: [21, 52, 46], fontStyle: "bold" },
+    margin: { left: 15, right: 15 },
+  });
+  doc.save("all-beneficiary-payments.pdf");
+}
+
+export function exportBeneficiaryStatementPDF({ beneficiary, rows, grandTotal, startDate, endDate }) {
+  const JsPDF = getJsPDF();
+  const doc = new JsPDF({ unit: "mm", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  let y = addLetterhead(doc, pageWidth);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text(`Individual Beneficiary Pay — ${beneficiary}`, pageWidth / 2, y, { align: "center" });
+  y = dateRangeLine(doc, pageWidth, y + 7, startDate, endDate);
+
+  doc.autoTable({
+    startY: y,
+    head: [["Date", "Item", "Method", "Amount", "Remarks"]],
+    body: rows.map((c) => [fmtDate(c.date), c.item || "", c.paymentMethod || "", money(c.amount), c.remarks || ""]),
+    foot: [["", "", "Grand Total", money(grandTotal), ""]],
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [21, 52, 46] },
+    footStyles: { fillColor: [241, 230, 204], textColor: [21, 52, 46], fontStyle: "bold" },
+    margin: { left: 15, right: 15 },
+  });
+  doc.save(`beneficiary-pay-${beneficiary.replace(/\s+/g, "_")}.pdf`);
+}
+
+export function exportAssetsLiabilitiesPDF(data) {
+  const JsPDF = getJsPDF();
+  const doc = new JsPDF({ unit: "mm", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  let y = addLetterhead(doc, pageWidth);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("Assets & Liabilities", pageWidth / 2, y, { align: "center" });
+  y += 8;
+
+  doc.autoTable({
+    startY: y,
+    head: [["Liabilities", "Amount"]],
+    body: data.liabilities.map((l) => [l.label, money(l.amount)]),
+    foot: [["Total Liabilities", money(data.totalLiabilities)]],
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [21, 52, 46] },
+    footStyles: { fillColor: [241, 230, 204], textColor: [21, 52, 46], fontStyle: "bold" },
+    margin: { left: 15, right: 15 },
+  });
+
+  const y2 = doc.lastAutoTable.finalY + 10;
+  doc.autoTable({
+    startY: y2,
+    head: [["Assets", "Amount"]],
+    body: data.assets.map((a) => [a.label, money(a.amount)]),
+    foot: [["Total Assets", money(data.totalAssets)]],
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [21, 52, 46] },
+    footStyles: { fillColor: [241, 230, 204], textColor: [21, 52, 46], fontStyle: "bold" },
+    margin: { left: 15, right: 15 },
+  });
+
+  const finalY = doc.lastAutoTable.finalY + 10;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text(`Bank Balance: ${money(data.bankBalance)}`, 15, finalY);
+  doc.text(`Cost/Share: ${money(data.costPerShare)}`, pageWidth - 15, finalY, { align: "right" });
+
+  doc.save("assets-liabilities.pdf");
+}
+
+export function exportDepositsAndDuesPDF(data) {
+  const JsPDF = getJsPDF();
+  const doc = new JsPDF({ unit: "mm", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  let y = addLetterhead(doc, pageWidth);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("Deposits & Dues", pageWidth / 2, y, { align: "center" });
+  y += 8;
+
+  doc.autoTable({
+    startY: y,
+    head: [["Name", "Deposit", "Due"]],
+    body: data.rows.map((r) => [r.name, money(r.deposit), money(r.due)]),
+    foot: [["Total", money(data.totalDeposit), money(data.totalDue)]],
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [21, 52, 46] },
+    footStyles: { fillColor: [241, 230, 204], textColor: [21, 52, 46], fontStyle: "bold" },
+    margin: { left: 15, right: 15 },
+  });
+  doc.save("deposits-and-dues.pdf");
+}
+
+export function exportCashVoucherReportPDF({ vouchers, cheques, totalVouchers, totalCheques }) {
+  const JsPDF = getJsPDF();
+  const doc = new JsPDF({ unit: "mm", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  let y = addLetterhead(doc, pageWidth);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("Cash Voucher Report", pageWidth / 2, y, { align: "center" });
+  y += 8;
+
+  doc.autoTable({
+    startY: y,
+    head: [["Voucher No", "Date", "Description", "Cheque No", "Amount"]],
+    body: vouchers.map((v) => [v.voucherNo, fmtDate(v.date), v.description, v.chequeNo || "—", money(v.amount)]),
+    foot: [["", "", "", "Total", money(totalVouchers)]],
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [21, 52, 46] },
+    footStyles: { fillColor: [241, 230, 204], textColor: [21, 52, 46], fontStyle: "bold" },
+    margin: { left: 15, right: 15 },
+  });
+
+  const y2 = doc.lastAutoTable.finalY + 10;
+  doc.autoTable({
+    startY: y2,
+    head: [["Cheque No", "Date", "Amount", "Voucher No"]],
+    body: cheques.map((c) => [c.chequeNo, fmtDate(c.date), money(c.amount), c.voucherNo || "—"]),
+    foot: [["", "", "Total", money(totalCheques)]],
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [21, 52, 46] },
+    footStyles: { fillColor: [241, 230, 204], textColor: [21, 52, 46], fontStyle: "bold" },
+    margin: { left: 15, right: 15 },
+  });
+
+  doc.save("cash-voucher-report.pdf");
+}
