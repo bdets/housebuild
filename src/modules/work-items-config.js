@@ -1,8 +1,9 @@
 import { getCostItems, saveCostItems } from "../config-lists.js";
 import { toast } from "../utils.js";
+import { logActivity } from "../activity.js";
 import { t, getLang } from "../i18n.js";
 
-export async function render(root) {
+export async function render(root, identity) {
   const en = getLang() === "en";
   let items = await getCostItems();
 
@@ -60,6 +61,7 @@ export async function render(root) {
     });
     document.getElementById("saveItemsBtn").addEventListener("click", async () => {
       await saveCostItems(items.filter(Boolean));
+      logActivity(identity, "work_items_changed");
       toast(t("saved"));
     });
   }

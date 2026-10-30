@@ -9,6 +9,9 @@ import {
   sendPasswordResetEmail,
   onAuthStateChanged,
   signOut,
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   initializeFirestore,
@@ -63,6 +66,9 @@ export {
   sendPasswordResetEmail,
   onAuthStateChanged,
   signOut,
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
   // firestore
   collection,
   doc,

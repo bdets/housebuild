@@ -1,5 +1,6 @@
 import { logout } from "./auth.js";
 import { t, getLang, setLang } from "./i18n.js";
+import { roleLabel } from "./roles.js";
 
 // Leaf items carry `module` (an admin needs that module checked) or
 // `directorPlus` (director/superAdmin only) or `staffOnly` (any active
@@ -13,6 +14,7 @@ const NAV_TREE = [
     labelKey: "entrySystem",
     icon: "📝",
     items: [
+      { key: "shareholder-entry", labelKey: "shareholderEntry", module: "shareholders" },
       { key: "deposits-entry", labelKey: "depositEntry", module: "deposits" },
       { key: "deposits-list", labelKey: "depositList", module: "deposits" },
       { key: "costs-entry", labelKey: "costEntry", module: "costs" },
@@ -71,11 +73,21 @@ const NAV_TREE = [
     ],
   },
 
+  { key: "profile", labelKey: "myProfile", icon: "👤" },
   { key: "users", labelKey: "users", icon: "👥", directorPlus: true },
   { key: "reports-approval", labelKey: "reports", icon: "✅", directorPlus: true },
   { key: "messages", labelKey: "messages", icon: "✉️", module: "messages" },
   { key: "backup", labelKey: "backup", icon: "🗄️", staffOnly: true },
-  { key: "settings", labelKey: "settings", icon: "⚙️", directorPlus: true },
+
+  {
+    group: "settingsGroup",
+    labelKey: "settings",
+    icon: "⚙️",
+    items: [
+      { key: "settings", labelKey: "orgInfo", directorPlus: true },
+      { key: "activity-log", labelKey: "activityLog", directorPlus: true },
+    ],
+  },
 ];
 
 function canSeeLeaf(item, identity) {
@@ -115,7 +127,7 @@ function renderNode(node, identity, activeKey) {
   </details>`;
 }
 
-const ROLE_LABEL = { superAdmin: "Super Admin", director: "Director", admin: "Admin" };
+
 
 /**
  * Mounts the sidebar shell ONCE. `onNavigate(key)` is called (click already
@@ -141,7 +153,7 @@ export function renderShell({ activeKey, identity, org, onNavigate }) {
         <nav class="sidebar-nav">${navHtml}</nav>
         <div class="sidebar-foot">
           <div class="muted" style="margin-bottom:8px;">${identity.name || identity.email || ""} · ${
-      ROLE_LABEL[identity.role] || identity.role
+      roleLabel(identity.role, getLang())
     }</div>
           <div id="syncStatus" class="muted" style="margin-bottom:8px;font-size:.78rem;"></div>
           <div class="btn-row" style="margin-bottom:8px;">
@@ -169,6 +181,17 @@ export function renderShell({ activeKey, identity, org, onNavigate }) {
   backdrop.addEventListener("click", () => {
     sidebar.classList.remove("open");
     backdrop.classList.remove("show");
+  });
+
+  // accordion behavior: opening one group/subgroup collapses its siblings
+  // at the same level (but never touches its own parent/children)
+  sidebar.querySelectorAll("details").forEach((det) => {
+    det.addEventListener("toggle", () => {
+      if (!det.open || !det.parentElement) return;
+      det.parentElement.querySelectorAll(":scope > details").forEach((sibling) => {
+        if (sibling !== det) sibling.open = false;
+      });
+    });
   });
 
   // auto-expand whichever group/subgroup contains the currently active leaf

@@ -1,17 +1,7 @@
-import { db, collection, getDocs, doc, writeBatch } from "../firebase.js";
+import { db, doc, collection, writeBatch } from "../firebase.js";
 import { toast } from "../utils.js";
 import { t } from "../i18n.js";
-
-const COLLECTIONS = ["users", "deposits", "costs", "vouchers", "cheques", "notices", "reports"];
-const SHEET_NAME = {
-  users: "Users",
-  deposits: "Deposits",
-  costs: "Costs",
-  vouchers: "Vouchers",
-  cheques: "Cheques",
-  notices: "Notices",
-  reports: "Reports",
-};
+import { BACKUP_COLLECTIONS, SHEET_NAME, fetchAllData, triggerDownload, backupFileStamp } from "../backup-core.js";
 
 export async function render(root, identity) {
   const canImport = identity.role === "superAdmin" || identity.role === "director";
@@ -36,28 +26,10 @@ export async function render(root, identity) {
     <div id="backupStatus" class="muted"></div>
   `;
 
-  async function fetchAll() {
-    const data = {};
-    for (const name of COLLECTIONS) {
-      const snap = await getDocs(collection(db, name));
-      data[name] = snap.docs.map((d) => ({ _id: d.id, ...d.data() }));
-    }
-    return data;
-  }
-
-  function download(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
   document.getElementById("jsonExportBtn").addEventListener("click", async () => {
     document.getElementById("backupStatus").textContent = t("loading");
-    const data = await fetchAll();
-    download(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }), `backup-${new Date().toISOString().slice(0, 10)}.json`);
+    const data = await fetchAllData();
+    triggerDownload(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }), `${backupFileStamp()}.json`);
     document.getElementById("backupStatus").textContent = "";
     toast(t("saved"));
   });
@@ -68,12 +40,12 @@ export async function render(root, identity) {
       return;
     }
     document.getElementById("backupStatus").textContent = t("loading");
-    const data = await fetchAll();
+    const data = await fetchAllData();
     const wb = window.XLSX.utils.book_new();
-    for (const name of COLLECTIONS) {
+    for (const name of BACKUP_COLLECTIONS) {
       window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.json_to_sheet(data[name]), SHEET_NAME[name]);
     }
-    window.XLSX.writeFile(wb, `backup-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    window.XLSX.writeFile(wb, `${backupFileStamp()}.xlsx`);
     document.getElementById("backupStatus").textContent = "";
     toast(t("saved"));
   });
@@ -109,7 +81,7 @@ export async function render(root, identity) {
       try {
         const wb = window.XLSX.read(await file.arrayBuffer(), { type: "array" });
         const data = {};
-        for (const name of COLLECTIONS) {
+        for (const name of BACKUP_COLLECTIONS) {
           const sheetName = SHEET_NAME[name];
           if (wb.Sheets[sheetName]) data[name] = window.XLSX.utils.sheet_to_json(wb.Sheets[sheetName]);
         }
@@ -124,7 +96,7 @@ export async function render(root, identity) {
 
   async function importByCollection(data) {
     document.getElementById("backupStatus").textContent = t("loading");
-    for (const name of COLLECTIONS) {
+    for (const name of BACKUP_COLLECTIONS) {
       const rows = data[name];
       if (!Array.isArray(rows) || !rows.length) continue;
       let batch = writeBatch(db);

@@ -220,6 +220,34 @@ const DICT = {
   beneficiary2: { bn: "প্রাপক", en: "Beneficiary" },
   pickItem: { bn: "-- একটা আইটেম বেছে নিন --", en: "-- Pick an item --" },
   pickBeneficiary: { bn: "-- একজন প্রাপক বেছে নিন --", en: "-- Pick a beneficiary --" },
+
+  // My Profile / password change
+  myProfile: { bn: "আমার প্রোফাইল", en: "My Profile" },
+  currentPassword: { bn: "বর্তমান পাসওয়ার্ড", en: "Current Password" },
+  newPassword: { bn: "নতুন পাসওয়ার্ড", en: "New Password" },
+  confirmNewPassword: { bn: "নতুন পাসওয়ার্ড আবার দিন", en: "Confirm New Password" },
+  changePassword: { bn: "পাসওয়ার্ড পরিবর্তন করুন", en: "Change Password" },
+  passwordChanged: { bn: "পাসওয়ার্ড পরিবর্তন হয়েছে।", en: "Password changed." },
+  passwordMismatch: { bn: "নতুন পাসওয়ার্ড দুটো মিলছে না।", en: "New passwords don't match." },
+
+  // Shareholder Entry
+  shareholderEntry: { bn: "শেয়ার হোল্ডার এন্ট্রি", en: "Shareholder Entry" },
+  fatherName: { bn: "পিতার নাম", en: "Father's Name" },
+  motherName: { bn: "মাতার নাম", en: "Mother's Name" },
+  spouseName: { bn: "স্বামী/স্ত্রীর নাম", en: "Spouse's Name" },
+  currentAddress: { bn: "বর্তমান ঠিকানা", en: "Current Address" },
+  permanentAddress: { bn: "স্থায়ী ঠিকানা", en: "Permanent Address" },
+  whatsapp: { bn: "হোয়াটসঅ্যাপ নম্বর", en: "WhatsApp Number" },
+  photo: { bn: "ছবি", en: "Photo" },
+  selectShareholder: { bn: "-- শেয়ার হোল্ডার বেছে নিন --", en: "-- Select Shareholder --" },
+
+  // Activity log
+  activityLog: { bn: "একটিভিটি লগ", en: "Activity Log" },
+  noLogsYet: { bn: "এখনো কোনো লগ নেই।", en: "No log entries yet." },
+  action: { bn: "কার্যকলাপ", en: "Action" },
+  by: { bn: "করেছে", en: "By" },
+  when: { bn: "সময়", en: "When" },
+  orgInfo: { bn: "সংগঠনের তথ্য", en: "Organization Info" },
 };
 
 let lang = (typeof localStorage !== "undefined" && localStorage.getItem("lang")) || "bn";

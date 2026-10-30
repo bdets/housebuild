@@ -1,6 +1,7 @@
 import { db, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from "../firebase.js";
 import { fmtDate, toast } from "../utils.js";
 import { t } from "../i18n.js";
+import { logActivity } from "../activity.js";
 
 export async function render(root, identity) {
   root.innerHTML = `
@@ -92,6 +93,7 @@ export async function render(root, identity) {
       createdBy: identity.uid,
       createdAt: serverTimestamp(),
     });
+    logActivity(identity, "notice_added", fd.get("title"));
     toast(t("saved"));
     e.target.reset();
     load();

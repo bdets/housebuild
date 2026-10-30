@@ -11,10 +11,13 @@ const DEFAULT_COST_ITEMS = [
   "Electrical",
 ];
 
+// Each step: { name, amount (per share, required by this installment),
+// initialDate, finalDate ('YYYY-MM-DD'), fine (flat amount charged per
+// calendar month a share is still short, once finalDate has passed) }
 const DEFAULT_INSTALLMENT_STEPS = [
-  { name: "1st Installment", targetAmount: 0, fine: 0 },
-  { name: "2nd Installment", targetAmount: 0, fine: 0 },
-  { name: "3rd Installment", targetAmount: 0, fine: 0 },
+  { name: "1st Installment", amount: 0, initialDate: "", finalDate: "", fine: 0 },
+  { name: "2nd Installment", amount: 0, initialDate: "", finalDate: "", fine: 0 },
+  { name: "3rd Installment", amount: 0, initialDate: "", finalDate: "", fine: 0 },
 ];
 
 /** Reads config/costItems (Work Items List); falls back to sensible defaults. */

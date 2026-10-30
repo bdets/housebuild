@@ -1,6 +1,7 @@
 import { db, collection, getDocs, addDoc, deleteDoc, doc, query, where, orderBy, serverTimestamp } from "../firebase.js";
 import { fmtDate, toast } from "../utils.js";
 import { t, getLang } from "../i18n.js";
+import { logActivity } from "../activity.js";
 
 const CATEGORY_LABEL = {
   transferbill: { bn: "ট্রান্সফার বিল", en: "Transfer Bill" },
@@ -78,6 +79,7 @@ export async function render(root, identity, category) {
         createdBy: identity.uid,
         createdAt: serverTimestamp(),
       });
+      logActivity(identity, "post_added", `${category}: ${fd.get("title")}`);
       toast(t("saved"));
       e.target.reset();
       load();

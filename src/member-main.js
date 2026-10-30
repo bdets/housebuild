@@ -1,6 +1,6 @@
 import { db, collection, addDoc, getDocs, query, where, orderBy, serverTimestamp } from "./firebase.js";
 import { getOrg } from "./org-store.js";
-import { guardPage, logout } from "./auth.js";
+import { guardPage, logout, changeOwnPassword } from "./auth.js";
 import { computeOwnMemberSummary } from "./reports.js";
 import { money, fmtDate, toast } from "./utils.js";
 import { exportMemberStatementPDF } from "./print.js";
@@ -110,6 +110,16 @@ guardPage(["member"], async (identity) => {
         </form>
       </div>
 
+      <div class="panel">
+        <h2>${t("changePassword")}</h2>
+        <form id="pwForm" class="form-grid">
+          <div><label>${t("currentPassword")} *</label><input type="password" name="current" required /></div>
+          <div><label>${t("newPassword")} *</label><input type="password" name="next" minlength="6" required /></div>
+          <div><label>${t("confirmNewPassword")} *</label><input type="password" name="confirm" minlength="6" required /></div>
+          <div style="grid-column:1/-1" class="btn-row"><button type="submit" class="btn-primary">${t("changePassword")}</button></div>
+        </form>
+      </div>
+
       <button class="btn-ghost" id="logoutBtn">${t("logout")}</button>
     `;
 
@@ -122,6 +132,22 @@ guardPage(["member"], async (identity) => {
     });
 
     document.getElementById("logoutBtn").addEventListener("click", logout);
+
+    document.getElementById("pwForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      if (fd.get("next") !== fd.get("confirm")) {
+        toast(t("passwordMismatch"), true);
+        return;
+      }
+      try {
+        await changeOwnPassword(fd.get("current"), fd.get("next"));
+        toast(t("passwordChanged"));
+        e.target.reset();
+      } catch (err) {
+        toast(err.message || (en ? "Failed." : "ব্যর্থ হয়েছে।"), true);
+      }
+    });
 
     document.getElementById("downloadStatementBtn").addEventListener("click", () => {
       toast(en ? "Preparing statement..." : "স্টেটমেন্ট তৈরি হচ্ছে...");

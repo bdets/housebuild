@@ -1,6 +1,7 @@
 import { db, collection, getDocs, addDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from "../firebase.js";
 import { money, fmtDate, todayISO, toast, fillDatalist } from "../utils.js";
 import { exportVoucherPDF } from "../print.js";
+import { logActivity } from "../activity.js";
 import { t } from "../i18n.js";
 
 export async function render(root, identity) {
@@ -98,6 +99,7 @@ export async function render(root, identity) {
       enteredBy: identity.uid,
       createdAt: serverTimestamp(),
     });
+    logActivity(identity, "voucher_added", `${fd.get("voucherNo")}: ${fd.get("amount")}`);
     toast(t("saved"));
     e.target.reset();
     e.target.date.value = todayISO();
@@ -143,6 +145,7 @@ export async function render(root, identity) {
       enteredBy: identity.uid,
       createdAt: serverTimestamp(),
     });
+    logActivity(identity, "cheque_added", `${fd.get("chequeNo")}: ${fd.get("amount")}`);
     toast(t("saved"));
     e.target.reset();
     e.target.date.value = todayISO();

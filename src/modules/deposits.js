@@ -13,6 +13,7 @@ import {
 import { money, fmtDate, todayISO, toast, fillDatalist } from "../utils.js";
 import { printThermalReceipt } from "../print.js";
 import { getInstallmentPlan } from "../config-lists.js";
+import { logActivity } from "../activity.js";
 import { t, getLang } from "../i18n.js";
 
 const PAYMENT_METHODS = ["CASH", "Transfer", "Cheque"];
@@ -129,6 +130,7 @@ export async function renderEntry(root, identity) {
       return;
     }
     const ref = await addDoc(collection(db, "deposits"), payload);
+    logActivity(identity, "deposit_added", `${memberMap[payload.memberId] || ""}: ${payload.amount}`);
     toast(t("saved"));
     if (fd.get("autoReceipt")) {
       printThermalReceipt({ deposit: { ...payload, id: ref.id }, member: { name: memberMap[payload.memberId] || "" } });

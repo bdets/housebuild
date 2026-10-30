@@ -2,8 +2,11 @@ import { db, collection, getDocs, doc, setDoc, updateDoc, query, orderBy } from 
 import { createStaffOrMemberAccount, requestPasswordReset } from "../auth.js";
 import { randomPassword, toast } from "../utils.js";
 import { t, getLang } from "../i18n.js";
+import { roleLabel } from "../roles.js";
+import { logActivity } from "../activity.js";
 
 const MODULE_OPTIONS = [
+  { key: "shareholders", bn: "শেয়ার হোল্ডার এন্ট্রি", en: "Shareholder Entry" },
   { key: "deposits", bn: "ডিপোজিট / কিস্তি", en: "Deposits / Installments" },
   { key: "costs", bn: "খরচ / ব্যয়", en: "Costs / Expenses" },
   { key: "vouchers", bn: "ভাউচার / চেক", en: "Vouchers / Cheques" },
@@ -13,22 +16,20 @@ const MODULE_OPTIONS = [
   { key: "messages", bn: "বার্তা", en: "Messages" },
 ];
 
-const ROLE_LABEL = { director: "Director", admin: "Admin", member: { bn: "সাধারণ সদস্য", en: "Member" } };
-
 export async function render(root, identity) {
   const en = getLang() === "en";
   root.innerHTML = `
     <h1>${t("users")}</h1>
-    <p class="muted">${en ? "Create a new Director/Admin/Member account. Your own login session stays active." : "নতুন Director/Admin/সদস্য অ্যাকাউন্ট তৈরি করুন। (তোমার নিজের লগইন সেশন অক্ষুণ্ণ থাকবে।)"}</p>
+    <p class="muted">${en ? `Create a new ${roleLabel("director","en")}/${roleLabel("admin","en")}/${roleLabel("member","en")} account. Your own login session stays active.` : `নতুন ${roleLabel("director","bn")}/${roleLabel("admin","bn")}/${roleLabel("member","bn")} অ্যাকাউন্ট তৈরি করুন। (তোমার নিজের লগইন সেশন অক্ষুণ্ণ থাকবে।)`}</p>
 
     <div class="panel">
       <h2>${t("newAccount")}</h2>
       <form id="userForm" class="form-grid">
         <div><label>${t("role")} *</label>
           <select name="role" id="roleSelect" required>
-            ${identity.role === "superAdmin" ? `<option value="director">Director</option>` : ""}
-            <option value="admin">Admin</option>
-            <option value="member">${en ? "Member" : "সাধারণ সদস্য"}</option>
+            ${identity.role === "superAdmin" ? `<option value="director">${roleLabel("director", en ? "en" : "bn")}</option>` : ""}
+            <option value="admin">${roleLabel("admin", en ? "en" : "bn")}</option>
+            <option value="member">${roleLabel("member", en ? "en" : "bn")}</option>
           </select>
         </div>
         <div><label>${t("name")} *</label><input type="text" name="name" required /></div>
@@ -88,9 +89,8 @@ export async function render(root, identity) {
   roleSelect.addEventListener("change", toggleFields);
   toggleFields();
 
-  function roleLabel(role) {
-    if (role === "member") return en ? "Member" : "সাধারণ সদস্য";
-    return ROLE_LABEL[role] || role;
+  function roleLabelLocal(role) {
+    return roleLabel(role, en ? "en" : "bn");
   }
 
   async function loadUsers() {
@@ -101,7 +101,7 @@ export async function render(root, identity) {
       .map(
         (u) => `<tr>
         <td>${u.name || ""}</td>
-        <td>${roleLabel(u.role)}</td>
+        <td>${roleLabelLocal(u.role)}</td>
         <td>${u.email || ""}</td>
         <td>${(u.modules || []).join(", ") || "—"}</td>
         <td>${u.active === false ? "🔴 " + t("inactiveStatus") : "🟢 " + t("activeStatus")}</td>
@@ -119,6 +119,7 @@ export async function render(root, identity) {
       btn.addEventListener("click", async () => {
         const makeActive = btn.dataset.active === "false";
         await updateDoc(doc(db, "users", btn.dataset.toggle), { active: makeActive });
+        logActivity(identity, makeActive ? "account_activated" : "account_deactivated", btn.dataset.toggle);
         toast(
           makeActive
             ? en
@@ -164,6 +165,7 @@ export async function render(root, identity) {
         profile.totalShare = Number(fd.get("totalShare")) || 0;
       }
       await setDoc(doc(db, "users", newUid), profile);
+      logActivity(identity, "account_created", `${role}: ${fd.get("name")}`);
       toast(en ? "Account created." : "অ্যাকাউন্ট তৈরি হয়েছে।");
 
       document.getElementById("revealEmail").value = fd.get("email");

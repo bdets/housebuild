@@ -1,20 +1,17 @@
 import { computeBalanceSummary } from "../reports.js";
 import { money } from "../utils.js";
 import { exportBalanceReportPDF } from "../print.js";
-import { db, doc, setDoc } from "../firebase.js";
 import { t, getLang } from "../i18n.js";
 
 export async function render(root) {
   const en = getLang() === "en";
   root.innerHTML = `<h1>${t("dashboard")}</h1><p class="muted">${en ? "Loading all figures..." : "সব হিসাব লোড হচ্ছে..."}</p>`;
 
+  // Due is now computed from the installment plan (see Set Installments +
+  // src/reports.js computeInstallmentDue) — members read config/
+  // installmentPlan directly themselves (it's public), so there's no need
+  // to publish a cost-per-share value for them anymore.
   const summary = await computeBalanceSummary();
-
-  try {
-    await setDoc(doc(db, "config", "costPerShare"), { value: summary.costPerShare });
-  } catch (e) {
-    /* non-fatal if offline — will sync once back online */
-  }
 
   root.innerHTML = `
     <h1>${t("dashboard")}</h1>

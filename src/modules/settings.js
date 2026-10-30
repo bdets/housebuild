@@ -3,6 +3,7 @@ import { toast, resizeImageToDataUrl } from "../utils.js";
 import { getOrg, invalidateOrg } from "../org-store.js";
 import { updateShellBrand } from "../ui-shell.js";
 import { t, getLang } from "../i18n.js";
+import { logActivity } from "../activity.js";
 
 export async function render(root, identity) {
   const en = getLang() === "en";
@@ -86,6 +87,7 @@ export async function render(root, identity) {
     invalidateOrg();
     const fresh = await getOrg(true);
     updateShellBrand(fresh);
+    logActivity(identity, "org_settings_changed");
 
     toast(
       en
@@ -100,6 +102,7 @@ export async function render(root, identity) {
       e.preventDefault();
       const fd = new FormData(e.target);
       await setDoc(doc(db, "config", "appMeta"), { expiryDate: fd.get("expiryDate") || null }, { merge: true });
+      logActivity(identity, "app_expiry_changed", fd.get("expiryDate") || "");
       toast(t("saved"));
     });
   }

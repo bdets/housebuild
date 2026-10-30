@@ -20,6 +20,7 @@ const REPORT_KEYS = [
 const VIEW_CONFIG = {
   dashboard: { loader: () => import("./modules/dashboard.js"), fn: "render", staffOnly: true },
 
+  "shareholder-entry": { loader: () => import("./modules/shareholder-entry.js"), fn: "render", module: "shareholders" },
   "deposits-entry": { loader: () => import("./modules/deposits.js"), fn: "renderEntry", module: "deposits" },
   "deposits-list": { loader: () => import("./modules/deposits.js"), fn: "renderList", module: "deposits" },
   "costs-entry": { loader: () => import("./modules/costs.js"), fn: "renderEntry", module: "costs" },
@@ -33,11 +34,13 @@ const VIEW_CONFIG = {
   "posts-transferbill": { loader: () => import("./modules/posts.js"), fn: "render", module: "posts", arg: "transferbill" },
   "posts-cashvoucher": { loader: () => import("./modules/posts.js"), fn: "render", module: "posts", arg: "cashvoucher" },
 
+  profile: { loader: () => import("./modules/profile.js"), fn: "render" },
   users: { loader: () => import("./modules/users.js"), fn: "render", directorPlus: true },
   "reports-approval": { loader: () => import("./modules/reports-approval.js"), fn: "render", directorPlus: true },
   messages: { loader: () => import("./modules/messages.js"), fn: "render", module: "messages" },
   backup: { loader: () => import("./modules/backup.js"), fn: "render", staffOnly: true },
   settings: { loader: () => import("./modules/settings.js"), fn: "render", directorPlus: true },
+  "activity-log": { loader: () => import("./modules/activity-log.js"), fn: "render", directorPlus: true },
 };
 
 // all 11 "rpt-*" report leaves share one module file (statements.js) and

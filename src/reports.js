@@ -1,4 +1,52 @@
 import { db, collection, getDocs, query, where, orderBy, getDoc, doc } from "./firebase.js";
+import { getInstallmentPlan } from "./config-lists.js";
+
+/** Whole calendar months elapsed from a 'YYYY-MM-DD' date to `asOf` (0 if not yet passed). */
+function monthsLate(fromDateStr, asOf) {
+  if (!fromDateStr) return 0;
+  const from = new Date(fromDateStr);
+  if (isNaN(from) || from > asOf) return 0;
+  let months = (asOf.getFullYear() - from.getFullYear()) * 12 + (asOf.getMonth() - from.getMonth());
+  if (asOf.getDate() < from.getDate()) months -= 1;
+  return Math.max(0, months);
+}
+
+/**
+ * Due, per the installment plan (Set Installments), for one member.
+ *
+ * Payments are applied to installment steps in order (step 1 must be
+ * filled before anything counts toward step 2, etc) rather than matched by
+ * the free-text "Details" label on each deposit — the Details field stays
+ * free text (the real data has irregular/partial labels), so matching by
+ * label would under/over-count. Once a step's Final Date has passed with
+ * still-unpaid amount against it, that step's monthly Fine accrues for
+ * every whole month since, added to Due, until it's paid off.
+ */
+export function computeInstallmentDue(member, allDeposits, plan, asOf = new Date()) {
+  const share = Number(member.totalShare) || 0;
+  const myDeposits = allDeposits.filter((d) => d.memberId === member.id);
+  const totalPaid = myDeposits.reduce((s, d) => s + (Number(d.amount) || 0), 0);
+  const totalFinePaid = myDeposits.reduce((s, d) => s + (Number(d.fine) || 0), 0);
+
+  let remainingPaid = totalPaid;
+  let totalRequired = 0;
+  let accruedFine = 0;
+
+  for (const step of plan) {
+    const required = (Number(step.amount) || 0) * share;
+    totalRequired += required;
+    const appliedToStep = Math.min(remainingPaid, required);
+    remainingPaid -= appliedToStep;
+    const shortfall = required - appliedToStep;
+    if (step.finalDate && shortfall > 0) {
+      const late = monthsLate(step.finalDate, asOf);
+      if (late > 0) accruedFine += late * (Number(step.fine) || 0);
+    }
+  }
+
+  const due = totalRequired - totalPaid + accruedFine - totalFinePaid;
+  return { due, totalRequired, totalPaid, accruedFine, finePaid: totalFinePaid };
+}
 
 /**
  * Pulls members/deposits/costs and computes balances fresh every time —
@@ -8,10 +56,11 @@ import { db, collection, getDocs, query, where, orderBy, getDoc, doc } from "./f
  * stays within the "selective sync" boundary per role.
  */
 export async function computeBalanceSummary() {
-  const [membersSnap, depositsSnap, costsSnap] = await Promise.all([
+  const [membersSnap, depositsSnap, costsSnap, plan] = await Promise.all([
     getDocs(query(collection(db, "users"), where("role", "==", "member"))),
     getDocs(collection(db, "deposits")),
     getDocs(collection(db, "costs")),
+    getInstallmentPlan(),
   ]);
 
   const members = membersSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -22,14 +71,14 @@ export async function computeBalanceSummary() {
   const totalDeposit = deposits.reduce((s, d) => s + (Number(d.amount) || 0), 0);
   const totalFine = deposits.reduce((s, d) => s + (Number(d.fine) || 0), 0);
   const totalCost = costs.reduce((s, c) => s + (Number(c.amount) || 0), 0);
+  // "cost per share" stays as an informational construction-cost stat — it
+  // no longer drives Due, which now comes from the installment plan above.
   const costPerShare = totalShares > 0 ? totalCost / totalShares : 0;
   const bankBalance = totalDeposit + totalFine - totalCost;
 
   const perMember = members
     .map((m) => {
-      const myDeposits = deposits.filter((d) => d.memberId === m.id);
-      const myTotal = myDeposits.reduce((s, d) => s + (Number(d.amount) || 0), 0);
-      const demand = costPerShare * (Number(m.totalShare) || 0);
+      const { due, totalRequired, totalPaid } = computeInstallmentDue(m, deposits, plan);
       return {
         memberId: m.id,
         slno: m.slno,
@@ -37,9 +86,9 @@ export async function computeBalanceSummary() {
         mobile: m.mobile,
         name: m.name,
         share: m.totalShare,
-        demand,
-        deposit: myTotal,
-        due: demand - myTotal,
+        demand: totalRequired,
+        deposit: totalPaid,
+        due,
       };
     })
     .sort((a, b) => (a.slno || 0) - (b.slno || 0));
@@ -227,26 +276,22 @@ export async function getMemberStatementData(memberId) {
  * under the member-tier Firestore rules and keeps the offline cache small.
  */
 export async function computeOwnMemberSummary(uid) {
-  const [profileSnap, depositsSnap, orgCostPerShareSnap] = await Promise.all([
+  const [profileSnap, depositsSnap, plan] = await Promise.all([
     getDoc(doc(db, "users", uid)),
     getDocs(query(collection(db, "deposits"), where("memberId", "==", uid), orderBy("date", "desc"))),
-    getDoc(doc(db, "config", "costPerShare")).catch(() => null),
+    getInstallmentPlan(), // config/installmentPlan is publicly readable — see firestore.rules
   ]);
 
   const profile = profileSnap.exists() ? profileSnap.data() : {};
   const deposits = depositsSnap.docs.map((d) => ({ id: d.id, ...d.data() })).reverse();
-  const totalDeposit = deposits.reduce((s, d) => s + (Number(d.amount) || 0), 0);
-  // cost-per-share is published by staff (see modules/dashboard.js) to
-  // config/costPerShare since a member can't read the full costs collection
-  const costPerShare = orgCostPerShareSnap && orgCostPerShareSnap.exists() ? orgCostPerShareSnap.data().value || 0 : 0;
-  const demand = costPerShare * (Number(profile.totalShare) || 0);
+  const { due, totalRequired, totalPaid } = computeInstallmentDue({ id: uid, totalShare: profile.totalShare }, deposits, plan);
 
   return {
     name: profile.name,
     share: profile.totalShare,
     deposits,
-    deposit: totalDeposit,
-    demand,
-    due: demand - totalDeposit,
+    deposit: totalPaid,
+    demand: totalRequired,
+    due,
   };
 }

@@ -1,6 +1,7 @@
 import { db, collection, getDocs, addDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from "../firebase.js";
 import { money, fmtDate, todayISO, toast, fillDatalist } from "../utils.js";
 import { getCostItems } from "../config-lists.js";
+import { logActivity } from "../activity.js";
 import { t, getLang } from "../i18n.js";
 
 const PAYMENT_METHODS = ["CASH", "Transfer", "Cheque"];
@@ -92,6 +93,7 @@ export async function renderEntry(root, identity) {
       enteredBy: identity.uid,
       createdAt: serverTimestamp(),
     });
+    logActivity(identity, "cost_added", `${fd.get("item")}: ${fd.get("amount")}`);
     toast(t("saved"));
     e.target.reset();
     e.target.date.value = todayISO();
