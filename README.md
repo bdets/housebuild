@@ -297,3 +297,9 @@ messages/{id}   { fromUid, fromName, text, status, replies: [...], createdAt }
 - তারিখ: `src/core/dates.js` — ঢাকার ক্যালেন্ডার তারিখ; মাস-গণনা ঢাকা-ভিত্তিক।
 - হিসাব: Individual Statement-এ প্রকৃত Due; মোট বকেয়া শুধু ধনাত্মক বকেয়ার যোগ।
 - বিস্তারিত পরীক্ষা ও rollback: `PHASE-1A-QA-BANGLA.md`।
+
+
+## ডিজাইন সংস্করণ (v2.5)
+- নতুন থিম (`src/style.css`): উষ্ণ ক্রিম পটভূমি, সবুজ accent, নরম কার্ড, হালকা সাইডবার, বড় বাংলা লেখা, মোবাইল ড্রয়ার।
+- কার্যকারিতা ও HTML কাঠামো অপরিবর্তিত; সব ব্যবহৃত class স্টাইলযুক্ত।
+- পুরনো থিম: `style.before-design.css` (নথি হিসেবে, zip-এ নয়)।
