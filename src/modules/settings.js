@@ -5,6 +5,7 @@ import { updateShellBrand } from "../ui-shell.js";
 import { t, getLang } from "../i18n.js";
 import { logActivity } from "../activity.js";
 
+import { html, raw } from "../core/html.js";
 export async function render(root, identity) {
   const en = getLang() === "en";
   const org = await getOrg();
@@ -13,7 +14,7 @@ export async function render(root, identity) {
   if (identity.role === "superAdmin") {
     const expirySnap = await getDoc(doc(db, "config", "appMeta"));
     const expiry = expirySnap.exists() ? expirySnap.data().expiryDate || "" : "";
-    expirySection = `
+    expirySection = html`
       <div class="panel">
         <h2>${en ? "App Expiry (Super Admin only)" : "অ্যাপের মেয়াদ (শুধু Super Admin)"}</h2>
         <p class="muted">${
@@ -28,7 +29,7 @@ export async function render(root, identity) {
       </div>`;
   }
 
-  root.innerHTML = `
+  root.innerHTML = html`
     <h1>${t("settings")}</h1>
     <div class="panel">
       <h2>${en ? "Organization Info" : "সংগঠনের তথ্য"}</h2>

@@ -2,6 +2,7 @@ import { logout } from "./auth.js";
 import { t, getLang, setLang } from "./i18n.js";
 import { roleLabel } from "./roles.js";
 
+import { html, raw } from "./core/html.js";
 // Leaf items carry `module` (an admin needs that module checked) or
 // `directorPlus` (director/superAdmin only) or `staffOnly` (any active
 // staff role). Groups/subgroups are just containers — a group shows if at
@@ -113,15 +114,15 @@ function renderNode(node, identity, activeKey) {
   if (node.key) {
     // leaf
     if (!canSeeLeaf(node, identity)) return "";
-    return `<a href="?view=${node.key}" data-view="${node.key}" class="${node.key === activeKey ? "active" : ""}">
-      ${node.icon ? `<span>${node.icon}</span>` : ""}<span data-label-key="${node.labelKey}">${t(node.labelKey)}</span>
+    return html`<a href="?view=${node.key}" data-view="${node.key}" class="${node.key === activeKey ? "active" : ""}">
+      ${node.icon ? html`<span>${node.icon}</span>` : ""}<span data-label-key="${node.labelKey}">${t(node.labelKey)}</span>
     </a>`;
   }
   // group or subgroup (both use <details>)
   if (!groupHasVisibleChild(node, identity)) return "";
-  const childrenHtml = (node.items || []).map((child) => renderNode(child, identity, activeKey)).join("");
+  const childrenHtml = raw((node.items || []).map((child) => renderNode(child, identity, activeKey)).join(""));
   const isSubgroup = !!node.subgroup;
-  return `<details class="${isSubgroup ? "nav-subgroup" : "nav-group"}">
+  return html`<details class="${isSubgroup ? "nav-subgroup" : "nav-group"}">
     <summary><span>${node.icon ? node.icon + " " : ""}</span><span data-label-key="${node.labelKey}">${t(node.labelKey)}</span></summary>
     <div class="nav-group-body">${childrenHtml}</div>
   </details>`;
@@ -135,16 +136,16 @@ function renderNode(node, identity, activeKey) {
  * owns what happens next (swap content, update the URL).
  */
 export function renderShell({ activeKey, identity, org, onNavigate }) {
-  const navHtml = NAV_TREE.map((node) => renderNode(node, identity, activeKey)).join("");
+  const navHtml = raw(NAV_TREE.map((node) => renderNode(node, identity, activeKey)).join(""));
 
   document.body.insertAdjacentHTML(
     "afterbegin",
-    `
+    html`
     <div class="app-shell">
       <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand" style="display:flex;align-items:center;gap:10px;">
-          ${org.logoDataUrl ? `<img id="shellOrgLogo" src="${org.logoDataUrl}" alt="logo" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0;" />` : `<img id="shellOrgLogo" style="display:none;width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0;" />`}
+          ${org.logoDataUrl ? html`<img id="shellOrgLogo" src="${org.logoDataUrl}" alt="logo" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0;" />` : html`<img id="shellOrgLogo" style="display:none;width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0;" />`}
           <div>
             <div class="org-name" id="shellOrgName">${org.name}</div>
             <div class="org-tag" id="shellOrgTag">${org.tagline || ""}</div>

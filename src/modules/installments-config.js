@@ -3,12 +3,13 @@ import { toast } from "../utils.js";
 import { logActivity } from "../activity.js";
 import { t, getLang } from "../i18n.js";
 
+import { html, raw } from "../core/html.js";
 export async function render(root, identity) {
   const en = getLang() === "en";
   let steps = await getInstallmentPlan();
 
   function paint() {
-    root.innerHTML = `
+    root.innerHTML = html`
       <h1>${t("setInstallments")}</h1>
       <p class="muted">${
         en
@@ -32,7 +33,7 @@ export async function render(root, identity) {
           <tbody>
             ${steps
               .map(
-                (s, i) => `<tr>
+                (s, i) => html`<tr>
                 <td>${i + 1}</td>
                 <td><input type="text" data-field="name" data-idx="${i}" value="${s.name || ""}" style="min-width:120px;" /></td>
                 <td class="num"><input type="number" data-field="amount" data-idx="${i}" value="${s.amount || 0}" style="text-align:right;min-width:90px;" /></td>
@@ -43,7 +44,7 @@ export async function render(root, identity) {
                 <td><button class="btn-danger" data-del="${i}" style="padding:4px 10px;">${t("delete")}</button></td>
               </tr>`
               )
-              .join("")}
+              }
           </tbody>
         </table></div>
         <div class="btn-row" style="margin-top:12px;">

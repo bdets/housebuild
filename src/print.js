@@ -1,6 +1,7 @@
 import { getCachedOrg } from "./org-store.js";
 import { money, fmtDate } from "./utils.js";
 
+import { html, raw } from "./core/html.js";
 // jsPDF + autotable are loaded as classic <script> tags in admin.html /
 // member.html and attach themselves to window.jspdf.
 function getJsPDF() {
@@ -265,7 +266,7 @@ export function printThermalReceipt({ deposit, member, voucherNo }) {
     return;
   }
   const org = getCachedOrg();
-  win.document.write(`
+  win.document.write(html`
     <html><head><meta charset="UTF-8" /><title>Receipt</title>
     <style>
       @page { size: 80mm auto; margin: 2mm; }
@@ -278,7 +279,7 @@ export function printThermalReceipt({ deposit, member, voucherNo }) {
       .big { font-size: 13px; font-weight:bold; }
     </style></head>
     <body>
-      ${org.logoDataUrl ? `<div class="center"><img src="${org.logoDataUrl}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;" /></div>` : ""}
+      ${org.logoDataUrl ? html`<div class="center"><img src="${org.logoDataUrl}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;" /></div>` : ""}
       <h2>${org.name}</h2>
       <div class="addr">${org.tagline || ""}</div>
       <div class="line"></div>
@@ -292,7 +293,7 @@ export function printThermalReceipt({ deposit, member, voucherNo }) {
       <div class="line"></div>
       <table>
         <tr class="big"><td>Amount</td><td class="right">${money(deposit.amount)}</td></tr>
-        ${deposit.fine ? `<tr><td>Fine</td><td class="right">${money(deposit.fine)}</td></tr>` : ""}
+        ${deposit.fine ? html`<tr><td>Fine</td><td class="right">${money(deposit.fine)}</td></tr>` : ""}
       </table>
       <div class="line"></div>
       <div class="center">ধন্যবাদ — Thank you</div>

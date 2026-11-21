@@ -14,8 +14,10 @@ import { money, fmtDate, todayISO, toast, fillDatalist } from "../utils.js";
 import { printThermalReceipt } from "../print.js";
 import { getInstallmentPlan } from "../config-lists.js";
 import { logActivity } from "../activity.js";
+import { voidRecord } from "../void.js";
 import { t, getLang } from "../i18n.js";
 
+import { html, raw } from "../core/html.js";
 const PAYMENT_METHODS = ["CASH", "Transfer", "Cheque"];
 
 async function getMembers() {
@@ -29,7 +31,7 @@ async function loadAllDeposits() {
 }
 
 function depositRowHtml(d, memberMap) {
-  return `<tr>
+  return html`<tr>
     <td>${fmtDate(d.date)}</td><td>${memberMap[d.memberId] || "—"}</td>
     <td>${d.installmentStep || "—"}</td>
     <td><span class="pill pill-${(d.paymentMethod || "").toLowerCase()}">${d.paymentMethod || ""}</span></td>
@@ -37,7 +39,7 @@ function depositRowHtml(d, memberMap) {
     <td>${d.remarks || ""}</td>
     <td>
       <button class="btn-ghost" data-receipt="${d.id}" style="padding:4px 10px;">${t("printReceipt")}</button>
-      <button class="btn-danger" data-del="${d.id}" style="padding:4px 10px;">${t("delete")}</button>
+      ${d.status === "void" ? html`<span class="pill pill-void">${t("statusVoid")}</span>` : html`<button class="btn-danger" data-void="${d.id}" data-vlabel="${memberMap[d.memberId] || ""} ${d.amount}" style="padding:4px 10px;">${t("voidAction")}</button>`}
     </td>
   </tr>`;
 }
@@ -49,11 +51,9 @@ function wireRowButtons(tbody, deposits, memberMap, onChange) {
       printThermalReceipt({ deposit: d, member: { name: memberMap[d.memberId] || "" } });
     });
   });
-  tbody.querySelectorAll("[data-del]").forEach((btn) => {
+  tbody.querySelectorAll("[data-void]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      if (!confirm(t("confirmDelete"))) return;
-      await deleteDoc(doc(db, "deposits", btn.dataset.del));
-      toast(t("deleted"));
+      if (!(await voidRecord("deposits", btn.dataset.void, btn.dataset.vlabel))) return;
       onChange();
     });
   });
@@ -65,21 +65,21 @@ export async function renderEntry(root, identity) {
   const [members, plan] = await Promise.all([getMembers(), getInstallmentPlan()]);
   const memberMap = Object.fromEntries(members.map((m) => [m.id, m.name]));
 
-  root.innerHTML = `
+  root.innerHTML = html`
     <h1>${t("depositEntry")}</h1>
     <div class="panel">
       <form id="depositForm" class="form-grid">
         <div><label>${t("member")} *</label><select name="memberId" required>
           <option value="">${t("selectMember")}</option>
-          ${members.map((m) => `<option value="${m.id}">${m.slno ?? ""}. ${m.name}</option>`).join("")}
+          ${members.map((m) => html`<option value="${m.id}">${m.slno ?? ""}. ${m.name}</option>`)}
         </select></div>
         <div><label>${t("date")} *</label><input type="date" name="date" value="${todayISO()}" required /></div>
         <div><label>${en ? "Details (e.g. 1st/2nd Installment)" : "বিস্তারিত (যেমন: ১ম/২য় কিস্তি)"}</label>
           <input type="text" name="installmentStep" list="installmentSuggestions" autocomplete="off" />
-          <datalist id="installmentSuggestions">${plan.map((s) => `<option value="${s.name}"></option>`).join("")}</datalist>
+          <datalist id="installmentSuggestions">${plan.map((s) => html`<option value="${s.name}"></option>`)}</datalist>
         </div>
         <div><label>${t("paymentMethod")} *</label><select name="paymentMethod" required>
-          ${PAYMENT_METHODS.map((p) => `<option value="${p}">${p}</option>`).join("")}
+          ${PAYMENT_METHODS.map((p) => html`<option value="${p}">${p}</option>`)}
         </select></div>
         <div><label>${t("amount")} (৳) *</label><input type="number" name="amount" min="0" step="1" required /></div>
         <div><label>${t("fine")} (৳)</label><input type="number" name="fine" min="0" step="1" value="0" /></div>
@@ -117,7 +117,7 @@ export async function renderEntry(root, identity) {
     const payload = {
       memberId: fd.get("memberId"),
       date: fd.get("date"),
-      installmentStep: fd.get("installmentStep") || null,
+      installmentStep: fd.get("installmentStep") || "",
       paymentMethod: fd.get("paymentMethod"),
       amount: Number(fd.get("amount")) || 0,
       fine: Number(fd.get("fine")) || 0,
@@ -150,13 +150,13 @@ export async function renderList(root) {
   const members = await getMembers();
   const memberMap = Object.fromEntries(members.map((m) => [m.id, m.name]));
 
-  root.innerHTML = `
+  root.innerHTML = html`
     <h1>${t("depositList")}</h1>
     <div class="panel">
       <div class="form-grid" style="margin-bottom:14px; max-width:320px;">
         <div><label>${t("filterByMember")}</label><select id="filterMember">
           <option value="">${t("everyone")}</option>
-          ${members.map((m) => `<option value="${m.id}">${m.name}</option>`).join("")}
+          ${members.map((m) => html`<option value="${m.id}">${m.name}</option>`)}
         </select></div>
       </div>
       <div class="table-wrap"><table>

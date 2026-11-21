@@ -214,6 +214,7 @@ const DICT = {
   newPost: { bn: "নতুন পোস্ট", en: "New Post" },
   driveLink: { bn: "Google Drive লিংক", en: "Google Drive Link" },
   openLink: { bn: "লিংক খুলুন", en: "Open Link" },
+  invalidLink: { bn: "শুধু https:// দিয়ে শুরু বৈধ লিংক দিন", en: "Enter a valid link starting with https://" },
   noPostsYet: { bn: "এখনো কোনো পোস্ট নেই।", en: "No posts yet." },
 
   // misc new report labels
@@ -240,6 +241,16 @@ const DICT = {
   whatsapp: { bn: "হোয়াটসঅ্যাপ নম্বর", en: "WhatsApp Number" },
   photo: { bn: "ছবি", en: "Photo" },
   selectShareholder: { bn: "-- শেয়ার হোল্ডার বেছে নিন --", en: "-- Select Shareholder --" },
+  addShareholder: { bn: "নতুন শেয়ার হোল্ডার", en: "New Shareholder" },
+  backToList: { bn: "← তালিকায় ফিরুন", en: "← Back to list" },
+  noShareholdersYet: {
+    bn: "এখনো কোনো শেয়ার হোল্ডার যোগ করা হয়নি — শুরু করতে \"নতুন শেয়ার হোল্ডার\" বাটনে ক্লিক করুন।",
+    en: "No shareholders added yet — click \"New Shareholder\" to get started.",
+  },
+  loginAccess: { bn: "লগইন", en: "Login" },
+  loginYes: { bn: "আছে", en: "Yes" },
+  loginNo: { bn: "নেই", en: "No" },
+  shareholderSaved: { bn: "শেয়ার হোল্ডার সংরক্ষণ করা হয়েছে।", en: "Shareholder saved." },
 
   // Activity log
   activityLog: { bn: "একটিভিটি লগ", en: "Activity Log" },
@@ -248,6 +259,17 @@ const DICT = {
   by: { bn: "করেছে", en: "By" },
   when: { bn: "সময়", en: "When" },
   orgInfo: { bn: "সংগঠনের তথ্য", en: "Organization Info" },
+  voidAction: { bn: "বাতিল করুন", en: "Void" },
+  voidTitle: { bn: "রেকর্ড বাতিল (Void)", en: "Void record" },
+  voidReasonLabel: { bn: "বাতিলের কারণ *", en: "Reason for voiding *" },
+  voided: { bn: "রেকর্ডটি বাতিল করা হয়েছে।", en: "Record voided." },
+  statusVoid: { bn: "বাতিল", en: "Void" },
+  yes: { bn: "হ্যাঁ", en: "Yes" },
+  no: { bn: "না", en: "No" },
+  backupAskTitle: { bn: "লগআউটের আগে ব্যাকআপ", en: "Backup before logout" },
+  backupAskMsg: { bn: "সম্পূর্ণ ডেটার JSON ব্যাকআপ ডাউনলোড করবেন?", en: "Download a full JSON backup before logging out?" },
+  backupFailed: { bn: "ব্যাকআপ ডাউনলোড হয়নি। পরে Backup পাতা থেকে নিন।", en: "Backup download failed. Use the Backup page later." },
+  backupSkipped: { bn: "এই ব্যাকআপে আপনার অনুমতির বাইরের অংশ নেই: ", en: "Not included (outside your permissions): " },
 };
 
 let lang = (typeof localStorage !== "undefined" && localStorage.getItem("lang")) || "bn";

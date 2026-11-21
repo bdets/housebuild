@@ -5,6 +5,7 @@ import { t, getLang } from "../i18n.js";
 import { roleLabel } from "../roles.js";
 import { logActivity } from "../activity.js";
 
+import { html, raw } from "../core/html.js";
 const MODULE_OPTIONS = [
   { key: "shareholders", bn: "শেয়ার হোল্ডার এন্ট্রি", en: "Shareholder Entry" },
   { key: "deposits", bn: "ডিপোজিট / কিস্তি", en: "Deposits / Installments" },
@@ -18,16 +19,21 @@ const MODULE_OPTIONS = [
 
 export async function render(root, identity) {
   const en = getLang() === "en";
-  root.innerHTML = `
+  root.innerHTML = html`
     <h1>${t("users")}</h1>
     <p class="muted">${en ? `Create a new ${roleLabel("director","en")}/${roleLabel("admin","en")}/${roleLabel("member","en")} account. Your own login session stays active.` : `নতুন ${roleLabel("director","bn")}/${roleLabel("admin","bn")}/${roleLabel("member","bn")} অ্যাকাউন্ট তৈরি করুন। (তোমার নিজের লগইন সেশন অক্ষুণ্ণ থাকবে।)`}</p>
+    <p class="muted" style="background:var(--gold-soft);border:1px solid var(--gold);border-radius:8px;padding:8px 12px;">
+      ${en
+        ? "Just adding a shareholder's info (no login needed)? Use \"Shareholder Entry\" in the sidebar instead — it's faster and needs no email."
+        : "শুধু একজন শেয়ার হোল্ডারের তথ্য যোগ করতে চাইলে (লগইন লাগবে না) — সাইডবারের \"শেয়ার হোল্ডার এন্ট্রি\" ব্যবহার করুন, সেটা দ্রুত এবং ইমেইল লাগে না।"}
+    </p>
 
     <div class="panel">
       <h2>${t("newAccount")}</h2>
       <form id="userForm" class="form-grid">
         <div><label>${t("role")} *</label>
           <select name="role" id="roleSelect" required>
-            ${identity.role === "superAdmin" ? `<option value="director">${roleLabel("director", en ? "en" : "bn")}</option>` : ""}
+            ${identity.role === "superAdmin" ? html`<option value="director">${roleLabel("director", en ? "en" : "bn")}</option>` : ""}
             <option value="admin">${roleLabel("admin", en ? "en" : "bn")}</option>
             <option value="member">${roleLabel("member", en ? "en" : "bn")}</option>
           </select>
@@ -44,10 +50,10 @@ export async function render(root, identity) {
           <label>${t("moduleAccess")}</label>
           <div style="display:flex;flex-wrap:wrap;gap:12px;">
             ${MODULE_OPTIONS.map(
-              (m) => `<label style="display:flex;align-items:center;gap:6px;font-weight:400;">
+              (m) => html`<label style="display:flex;align-items:center;gap:6px;font-weight:400;">
                 <input type="checkbox" name="modules" value="${m.key}" style="width:auto;" />${en ? m.en : m.bn}
               </label>`
-            ).join("")}
+            )}
           </div>
         </div>
         <div style="grid-column:1/-1" class="btn-row"><button type="submit" class="btn-primary">${t("createAccount")}</button></div>
@@ -99,7 +105,7 @@ export async function render(root, identity) {
     const tbody = document.getElementById("userRows");
     tbody.innerHTML = users
       .map(
-        (u) => `<tr>
+        (u) => html`<tr>
         <td>${u.name || ""}</td>
         <td>${roleLabelLocal(u.role)}</td>
         <td>${u.email || ""}</td>
@@ -163,6 +169,7 @@ export async function render(root, identity) {
         profile.slno = fd.get("slno") ? Number(fd.get("slno")) : null;
         profile.idNo = fd.get("idNo") || "";
         profile.totalShare = Number(fd.get("totalShare")) || 0;
+        profile.hasLogin = true;
       }
       await setDoc(doc(db, "users", newUid), profile);
       logActivity(identity, "account_created", `${role}: ${fd.get("name")}`);

@@ -195,3 +195,14 @@ td.num, th.num { text-align: right; }
 
 .muted { color: var(--ink-soft); font-size: .85rem; }
 .empty-state { text-align: center; padding: 40px 20px; color: var(--ink-soft); }
+
+/* ---- Phase 1A: বাতিল রেকর্ড + ডায়ালগ ---- */
+.pill-void { background: #ECEAE6; color: #7A7A7A; text-decoration: line-through; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(21, 52, 46, .45); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+.modal-box { background: var(--panel); border-radius: var(--radius); box-shadow: 0 8px 30px rgba(0, 0, 0, .2); max-width: 440px; width: 100%; padding: 20px; }
+.modal-box h3 { margin: 0 0 8px; color: var(--teal); }
+.modal-msg { color: var(--ink-soft); margin: 0 0 12px; white-space: pre-wrap; }
+.modal-box label { display: block; font-size: .9rem; margin-top: 6px; }
+.modal-box textarea { width: 100%; margin-top: 6px; box-sizing: border-box; }
+.modal-box textarea.invalid { border-color: var(--danger); }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }

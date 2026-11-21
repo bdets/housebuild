@@ -2,7 +2,9 @@ import { db, collection, getDocs, addDoc, deleteDoc, doc, query, where, orderBy,
 import { fmtDate, toast } from "../utils.js";
 import { t, getLang } from "../i18n.js";
 import { logActivity } from "../activity.js";
+import { askConfirm } from "../modal.js";
 
+import { html, raw, safeUrl, hrefOrHash } from "../core/html.js";
 const CATEGORY_LABEL = {
   transferbill: { bn: "ট্রান্সফার বিল", en: "Transfer Bill" },
   cashvoucher: { bn: "ক্যাশ ভাউচার", en: "Cash Voucher" },
@@ -14,11 +16,11 @@ export async function render(root, identity, category) {
   const canWrite = ["superAdmin", "director"].includes(identity.role) || (identity.modules || []).includes("posts");
   const label = CATEGORY_LABEL[category] ? CATEGORY_LABEL[category][en ? "en" : "bn"] : category;
 
-  root.innerHTML = `
+  root.innerHTML = html`
     <h1>${label}</h1>
     ${
       canWrite
-        ? `<div class="panel">
+        ? html`<div class="panel">
             <h2>${t("newPost")}</h2>
             <form id="postForm" class="form-grid">
               <div style="grid-column:1/-1"><label>${t("title")} *</label><input type="text" name="title" required /></div>
@@ -37,20 +39,20 @@ export async function render(root, identity, category) {
     const posts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     const list = document.getElementById("postList");
     if (!posts.length) {
-      list.innerHTML = `<div class="empty-state">${t("noPostsYet")}</div>`;
+      list.innerHTML = html`<div class="empty-state">${t("noPostsYet")}</div>`;
       return;
     }
     list.innerHTML = posts
       .map(
-        (p) => `<div class="panel" style="margin-bottom:10px;">
+        (p) => html`<div class="panel" style="margin-bottom:10px;">
         <div style="display:flex;justify-content:space-between;">
           <strong>${p.title}</strong>
           <span class="muted">${fmtDate(p.createdAt)}</span>
         </div>
-        ${p.description ? `<p style="margin:8px 0;">${p.description}</p>` : ""}
+        ${p.description ? html`<p style="margin:8px 0;">${p.description}</p>` : ""}
         <div class="btn-row">
-          <a href="${p.driveLink}" target="_blank" rel="noopener" class="btn-gold" style="text-decoration:none;padding:8px 16px;display:inline-block;">${t("openLink")}</a>
-          ${canWrite ? `<button class="btn-danger" data-del="${p.id}" style="padding:8px 16px;">${t("delete")}</button>` : ""}
+          <a href="${hrefOrHash(p.driveLink)}" target="_blank" rel="noopener" class="btn-gold" style="text-decoration:none;padding:8px 16px;display:inline-block;">${t("openLink")}</a>
+          ${canWrite ? html`<button class="btn-danger" data-del="${p.id}" style="padding:8px 16px;">${t("delete")}</button>` : ""}
         </div>
       </div>`
       )
@@ -58,7 +60,7 @@ export async function render(root, identity, category) {
 
     list.querySelectorAll("[data-del]").forEach((btn) =>
       btn.addEventListener("click", async () => {
-        if (!confirm(t("confirmDelete"))) return;
+        if (!(await askConfirm({ title: t("delete"), message: t("confirmDelete"), yesLabel: t("delete"), noLabel: t("cancel") }))) return;
         await deleteDoc(doc(db, "posts", btn.dataset.del));
         toast(t("deleted"));
         load();
@@ -71,11 +73,17 @@ export async function render(root, identity, category) {
     postForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
+      // শুধু https লিংক (javascript:/data: ইত্যাদি নয়)
+      const link = safeUrl(fd.get("driveLink"));
+      if (!link) {
+        toast(t("invalidLink"), true);
+        return;
+      }
       await addDoc(collection(db, "posts"), {
         category,
         title: fd.get("title"),
         description: fd.get("description") || "",
-        driveLink: fd.get("driveLink"),
+        driveLink: link,
         createdBy: identity.uid,
         createdAt: serverTimestamp(),
       });

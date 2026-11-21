@@ -1,3 +1,6 @@
+import { askConfirm } from "./modal.js";
+import { t } from "./i18n.js";
+import { toast } from "./utils.js";
 import { downloadFullJsonBackup } from "./backup-core.js";
 import { logActivity } from "./activity.js";
 import {
@@ -96,16 +99,39 @@ export async function changeOwnPassword(currentPassword, newPassword) {
  * blocks the actual sign-out.
  */
 export async function logout() {
+  let identity = null;
   try {
-    if (auth.currentUser) {
-      const identity = await resolveIdentity(auth.currentUser);
-      await logActivity(identity, "logout");
-      if (identity && (identity.role === "admin" || identity.role === "director")) {
-        await downloadFullJsonBackup();
+    if (auth.currentUser) identity = await resolveIdentity(auth.currentUser);
+  } catch (e) {
+    identity = null;
+  }
+
+  // Entry User / Admin: লগআউটের আগে হ্যাঁ/না (D-11) — "হ্যাঁ" হলে ডাউনলোড
+  if (identity && (identity.role === "admin" || identity.role === "director")) {
+    const yes = await askConfirm({
+      title: t("backupAskTitle"),
+      message: t("backupAskMsg"),
+      yesLabel: t("yes"),
+      noLabel: t("no"),
+    });
+    if (yes) {
+      try {
+        const { skipped } = await downloadFullJsonBackup();
+        if (skipped.length) {
+          toast(t("backupSkipped") + skipped.join(", "));
+          await new Promise((r) => setTimeout(r, 2500)); // বার্তাটি দেখার সময়
+        }
+      } catch (e) {
+        toast(t("backupFailed"), true);
+        await new Promise((r) => setTimeout(r, 2500));
       }
     }
+  }
+
+  try {
+    if (identity) await logActivity(identity, "logout");
   } catch (e) {
-    /* non-fatal — never block logout over a backup failure */
+    /* লগ ব্যর্থ হলেও লগআউট বন্ধ হবে না */
   }
   await signOut(auth);
   window.location.href = "index.html";
@@ -130,8 +156,13 @@ export async function createStaffOrMemberAccount(email, password) {
 /** One-time bootstrap: claim super admin if nobody holds it yet. */
 export async function claimSuperAdminIfVacant(name) {
   const ref = doc(db, "config", "superAdmin");
-  const existing = await getDoc(ref);
-  if (existing.exists()) {
+  let exists = true; // পড়া ব্যর্থ = অন্য কারো ডক আছে (rules দেয় না)
+  try {
+    exists = (await getDoc(ref)).exists();
+  } catch (e) {
+    exists = true;
+  }
+  if (exists) {
     throw new Error("একজন Super Admin ইতিমধ্যে নিবন্ধিত — তার কাছে অ্যাক্সেস চাও।");
   }
   if (!auth.currentUser) throw new Error("আগে সাইন-আপ/লগইন করো।");

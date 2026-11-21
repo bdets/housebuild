@@ -4,9 +4,10 @@ import { t, getLang } from "../i18n.js";
 import { roleLabel } from "../roles.js";
 import { logActivity } from "../activity.js";
 
+import { html, raw } from "../core/html.js";
 export async function render(root, identity) {
   const en = getLang() === "en";
-  root.innerHTML = `
+  root.innerHTML = html`
     <h1>${t("myProfile")}</h1>
     <div class="panel">
       <p><strong>${t("name")}:</strong> ${identity.name || ""}</p>

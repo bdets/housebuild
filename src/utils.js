@@ -1,4 +1,6 @@
 import { getCachedOrg } from "./org-store.js";
+import { html } from "./core/html.js";
+import { todayDhaka } from "./core/dates.js";
 
 export function money(n) {
   const num = Number(n) || 0;
@@ -7,23 +9,32 @@ export function money(n) {
 
 export function fmtDate(d) {
   if (!d) return "";
+  const opts = { day: "2-digit", month: "short", year: "numeric" };
+  // 'YYYY-MM-DD' ব্যবসায়িক তারিখ: ক্যালেন্ডার তারিখ হুবহু দেখাও (টাইমজোন-নিরপেক্ষ)
+  const m = typeof d === "string" ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(d) : null;
+  if (m) return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString("en-GB", { ...opts, timeZone: "UTC" });
   const date = d.toDate ? d.toDate() : new Date(d);
   if (isNaN(date)) return "";
-  return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  return date.toLocaleDateString("en-GB", { ...opts, timeZone: "Asia/Dhaka" });
 }
 
+// ঢাকার আজকের তারিখ 'YYYY-MM-DD' (আগে UTC ছিল → রাত ১২–ভোর ৬টায় গতকাল দেখাত)
 export function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+  return todayDhaka();
 }
 
-export function el(html) {
+// markup = SafeHtml (html`...`) বা বিশ্বস্ত স্থির স্ট্রিং। ব্যবহারকারীর ডেটা সরাসরি নয়।
+export function el(markup) {
   const t = document.createElement("template");
-  t.innerHTML = html.trim();
+  t.innerHTML = String(markup).trim();
   return t.content.firstElementChild;
 }
 
 export function toast(msg, isError = false) {
-  const box = el(`<div class="toast ${isError ? "toast-error" : ""}">${msg}</div>`);
+  // textContent: বার্তায় (যেমন সার্ভারের error text) HTML থাকলেও চলবে না
+  const box = document.createElement("div");
+  box.className = "toast" + (isError ? " toast-error" : "");
+  box.textContent = String(msg ?? "");
   document.body.appendChild(box);
   requestAnimationFrame(() => box.classList.add("show"));
   setTimeout(() => {
@@ -43,7 +54,7 @@ export function fillDatalist(id, values) {
   let dl = document.getElementById(id);
   if (!dl) return;
   const unique = [...new Set(values.filter(Boolean))].sort();
-  dl.innerHTML = unique.map((v) => `<option value="${String(v).replace(/"/g, "&quot;")}"></option>`).join("");
+  dl.innerHTML = unique.map((v) => html`<option value="${String(v)}"></option>`).join("");
 }
 
 /**

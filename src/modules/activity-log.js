@@ -3,6 +3,7 @@ import { fmtDate, toast } from "../utils.js";
 import { t, getLang } from "../i18n.js";
 import { roleLabel } from "../roles.js";
 
+import { html, raw } from "../core/html.js";
 const ACTION_LABEL = {
   login: { bn: "লগইন", en: "Login" },
   logout: { bn: "লগ আউট", en: "Logout" },
@@ -25,7 +26,7 @@ const ACTION_LABEL = {
 
 export async function render(root) {
   const en = getLang() === "en";
-  root.innerHTML = `
+  root.innerHTML = html`
     <h1>${t("activityLog")}</h1>
     <p class="muted">${en ? "Super Admin's own actions are never logged here." : "Super Admin-এর নিজের কোনো কাজ এখানে লগ হয় না।"}</p>
     <div class="panel"><div id="logList"></div></div>
@@ -36,16 +37,16 @@ export async function render(root) {
     const logs = snap.docs.map((d) => ({ id: d.id, ...d.data() })).slice(0, 300);
     const list = document.getElementById("logList");
     if (!logs.length) {
-      list.innerHTML = `<div class="empty-state">${t("noLogsYet")}</div>`;
+      list.innerHTML = html`<div class="empty-state">${t("noLogsYet")}</div>`;
       return;
     }
-    list.innerHTML = `
+    list.innerHTML = html`
       <div class="table-wrap"><table>
         <thead><tr><th>${t("when")}</th><th>${t("by")}</th><th>${t("role")}</th><th>${t("action")}</th><th>${t("remarks")}</th></tr></thead>
         <tbody>
           ${logs
             .map(
-              (l) => `<tr>
+              (l) => html`<tr>
               <td>${fmtDate(l.createdAt)}</td>
               <td>${l.name || ""}</td>
               <td>${roleLabel(l.role, en ? "en" : "bn")}</td>
@@ -53,7 +54,7 @@ export async function render(root) {
               <td>${l.details || ""}</td>
             </tr>`
             )
-            .join("")}
+            }
         </tbody>
       </table></div>
     `;

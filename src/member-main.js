@@ -6,6 +6,7 @@ import { money, fmtDate, toast } from "./utils.js";
 import { exportMemberStatementPDF } from "./print.js";
 import { t, getLang, setLang } from "./i18n.js";
 
+import { html, raw, hrefOrHash } from "./core/html.js";
 guardPage(["member"], async (identity) => {
   const root = document.getElementById("root");
   const [org, summary] = await Promise.all([getOrg(), computeOwnMemberSummary(identity.uid)]);
@@ -43,12 +44,12 @@ guardPage(["member"], async (identity) => {
 
   function paint() {
     const en = getLang() === "en";
-    root.innerHTML = `
+    root.innerHTML = html`
       <div class="btn-row" style="margin-bottom:14px;">
         <button type="button" class="btn-ghost lang-btn" data-lang="bn" style="padding:4px 10px;flex:1;">বাংলা</button>
         <button type="button" class="btn-ghost lang-btn" data-lang="en" style="padding:4px 10px;flex:1;">English</button>
       </div>
-      ${org.logoDataUrl ? `<img src="${org.logoDataUrl}" alt="logo" style="width:56px;height:56px;object-fit:cover;border-radius:10px;margin-bottom:8px;" />` : ""}
+      ${org.logoDataUrl ? html`<img src="${org.logoDataUrl}" alt="logo" style="width:56px;height:56px;object-fit:cover;border-radius:10px;margin-bottom:8px;" />` : ""}
       <h1>${org.name}</h1>
       <p class="muted">${org.address}</p>
 
@@ -64,41 +65,41 @@ guardPage(["member"], async (identity) => {
 
       ${
         reports.length
-          ? `<div class="panel"><h2>${en ? "Approved Reports" : "অনুমোদিত রিপোর্ট"}</h2>${reports
+          ? html`<div class="panel"><h2>${en ? "Approved Reports" : "অনুমোদিত রিপোর্ট"}</h2>${reports
               .map(
-                (r) => `<div style="margin-bottom:12px;border-bottom:1px solid var(--line);padding-bottom:10px;">
+                (r) => html`<div style="margin-bottom:12px;border-bottom:1px solid var(--line);padding-bottom:10px;">
                 <strong>${r.title}</strong> <span class="muted">· ${fmtDate(r.createdAt)}</span>
                 <p style="margin:6px 0 0;white-space:pre-wrap;">${r.summary}</p>
               </div>`
               )
-              .join("")}</div>`
+              }</div>`
           : ""
       }
 
       ${
         notices.length
-          ? `<div class="panel"><h2>${t("notices")}</h2>${notices
+          ? html`<div class="panel"><h2>${t("notices")}</h2>${notices
               .map(
-                (n) => `<div style="margin-bottom:12px;border-bottom:1px solid var(--line);padding-bottom:10px;">
+                (n) => html`<div style="margin-bottom:12px;border-bottom:1px solid var(--line);padding-bottom:10px;">
                 <strong>${n.title}</strong> <span class="muted">· ${fmtDate(n.createdAt)}</span>
                 <p style="margin:6px 0 0;">${n.body}</p>
               </div>`
               )
-              .join("")}</div>`
+              }</div>`
           : ""
       }
 
       ${
         posts.length
-          ? `<div class="panel"><h2>${t("postsGroup")}</h2>${posts
+          ? html`<div class="panel"><h2>${t("postsGroup")}</h2>${posts
               .map(
-                (p) => `<div style="margin-bottom:12px;border-bottom:1px solid var(--line);padding-bottom:10px;">
+                (p) => html`<div style="margin-bottom:12px;border-bottom:1px solid var(--line);padding-bottom:10px;">
                 <strong>${p.title}</strong> <span class="muted">· ${p.category === "transferbill" ? t("transferBill") : t("cashVoucherPost")} · ${fmtDate(p.createdAt)}</span>
-                ${p.description ? `<p style="margin:6px 0;">${p.description}</p>` : ""}
-                <a href="${p.driveLink}" target="_blank" rel="noopener" class="btn-gold" style="text-decoration:none;padding:6px 14px;display:inline-block;margin-top:4px;">${t("openLink")}</a>
+                ${p.description ? html`<p style="margin:6px 0;">${p.description}</p>` : ""}
+                <a href="${hrefOrHash(p.driveLink)}" target="_blank" rel="noopener" class="btn-gold" style="text-decoration:none;padding:6px 14px;display:inline-block;margin-top:4px;">${t("openLink")}</a>
               </div>`
               )
-              .join("")}</div>`
+              }</div>`
           : ""
       }
 

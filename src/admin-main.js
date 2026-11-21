@@ -3,6 +3,7 @@ import { renderShell, setActiveNavKey, relabelShell } from "./ui-shell.js";
 import { getOrg } from "./org-store.js";
 import { t } from "./i18n.js";
 
+import { html, raw } from "./core/html.js";
 const REPORT_KEYS = [
   "rpt-deposit-summary",
   "rpt-individual-statement",
@@ -88,7 +89,7 @@ guardPage(["superAdmin", "director", "admin"], async (identity) => {
 
     const cfg = VIEW_CONFIG[key] || VIEW_CONFIG.dashboard;
     if (!canAccess(cfg, identity)) {
-      viewRoot.innerHTML = `<div class="empty-state">${
+      viewRoot.innerHTML = html`<div class="empty-state">${
         cfg.directorPlus ? t("directorOnlyPage") : t("noModuleAccess")
       }</div>`;
     } else {

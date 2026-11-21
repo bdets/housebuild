@@ -2,9 +2,11 @@ import { db, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orde
 import { fmtDate, toast } from "../utils.js";
 import { t } from "../i18n.js";
 import { logActivity } from "../activity.js";
+import { askConfirm } from "../modal.js";
 
+import { html, raw } from "../core/html.js";
 export async function render(root, identity) {
-  root.innerHTML = `
+  root.innerHTML = html`
     <h1>${t("notices")}</h1>
     <div class="panel">
       <h2>${t("newNotice")}</h2>
@@ -35,12 +37,12 @@ export async function render(root, identity) {
     const notices = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     const list = document.getElementById("noticeList");
     if (!notices.length) {
-      list.innerHTML = `<div class="empty-state">${t("noNoticesYet")}</div>`;
+      list.innerHTML = html`<div class="empty-state">${t("noNoticesYet")}</div>`;
       return;
     }
     list.innerHTML = notices
       .map(
-        (n) => `<div class="panel" style="margin-bottom:10px;">
+        (n) => html`<div class="panel" style="margin-bottom:10px;">
         <div style="display:flex;justify-content:space-between;">
           <strong>${n.title}</strong>
           <span class="muted">${fmtDate(n.createdAt)} · ${n.status === "published" ? "✅ " + t("published") : "📝 " + t("draft")} · ${n.audience}</span>
@@ -49,8 +51,8 @@ export async function render(root, identity) {
         <div class="btn-row">
           ${
             n.status !== "published"
-              ? `<button class="btn-primary" data-publish="${n.id}" style="padding:6px 14px;">${t("publish")}</button>`
-              : `<button class="btn-ghost" data-unpublish="${n.id}" style="padding:6px 14px;">${t("unpublish")}</button>`
+              ? html`<button class="btn-primary" data-publish="${n.id}" style="padding:6px 14px;">${t("publish")}</button>`
+              : html`<button class="btn-ghost" data-unpublish="${n.id}" style="padding:6px 14px;">${t("unpublish")}</button>`
           }
           <button class="btn-danger" data-del="${n.id}" style="padding:6px 14px;">${t("delete")}</button>
         </div>
@@ -74,7 +76,7 @@ export async function render(root, identity) {
     );
     list.querySelectorAll("[data-del]").forEach((btn) =>
       btn.addEventListener("click", async () => {
-        if (!confirm(t("confirmDelete"))) return;
+        if (!(await askConfirm({ title: t("delete"), message: t("confirmDelete"), yesLabel: t("delete"), noLabel: t("cancel") }))) return;
         await deleteDoc(doc(db, "notices", btn.dataset.del));
         toast(t("deleted"));
         load();

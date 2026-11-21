@@ -1,14 +1,12 @@
+import { wholeMonthsBetween, dhakaDateOf } from "./core/dates.js";
+import { liveRow } from "./core/records.js";
 import { db, collection, getDocs, query, where, orderBy, getDoc, doc } from "./firebase.js";
 import { getInstallmentPlan } from "./config-lists.js";
 
 /** Whole calendar months elapsed from a 'YYYY-MM-DD' date to `asOf` (0 if not yet passed). */
 function monthsLate(fromDateStr, asOf) {
-  if (!fromDateStr) return 0;
-  const from = new Date(fromDateStr);
-  if (isNaN(from) || from > asOf) return 0;
-  let months = (asOf.getFullYear() - from.getFullYear()) * 12 + (asOf.getMonth() - from.getMonth());
-  if (asOf.getDate() < from.getDate()) months -= 1;
-  return Math.max(0, months);
+  // ঢাকার ক্যালেন্ডার তারিখ-ভিত্তিক (UTC/টাইমজোন ঝামেলা নেই — C-08)
+  return wholeMonthsBetween(fromDateStr, dhakaDateOf(asOf));
 }
 
 /**
@@ -63,9 +61,9 @@ export async function computeBalanceSummary() {
     getInstallmentPlan(),
   ]);
 
-  const members = membersSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-  const deposits = depositsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-  const costs = costsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const members = membersSnap.docs.map((d) => ({ id: d.id, ...d.data() })).filter(liveRow);
+  const deposits = depositsSnap.docs.map((d) => ({ id: d.id, ...d.data() })).filter(liveRow);
+  const costs = costsSnap.docs.map((d) => ({ id: d.id, ...d.data() })).filter(liveRow);
 
   const totalShares = members.reduce((s, m) => s + (Number(m.totalShare) || 0), 0);
   const totalDeposit = deposits.reduce((s, d) => s + (Number(d.amount) || 0), 0);
@@ -107,9 +105,9 @@ export async function computeDepositSummary(startDate, endDate) {
     getDocs(query(collection(db, "users"), where("role", "==", "member"))),
     getDocs(collection(db, "deposits")),
   ]);
-  const members = membersSnap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (a.slno || 0) - (b.slno || 0));
+  const members = membersSnap.docs.map((d) => ({ id: d.id, ...d.data() })).filter(liveRow).sort((a, b) => (a.slno || 0) - (b.slno || 0));
   const deposits = depositsSnap.docs
-    .map((d) => ({ id: d.id, ...d.data() }))
+    .map((d) => ({ id: d.id, ...d.data() })).filter(liveRow)
     .filter((d) => (!startDate || d.date >= startDate) && (!endDate || d.date <= endDate));
 
   const rows = members.map((m) => {
@@ -134,7 +132,7 @@ export async function computeDepositSummary(startDate, endDate) {
 export async function computeItemWiseSummary(startDate, endDate) {
   const snap = await getDocs(collection(db, "costs"));
   const costs = snap.docs
-    .map((d) => ({ id: d.id, ...d.data() }))
+    .map((d) => ({ id: d.id, ...d.data() })).filter(liveRow)
     .filter((c) => (!startDate || c.date >= startDate) && (!endDate || c.date <= endDate));
 
   const byItem = new Map();
@@ -152,7 +150,7 @@ export async function computeItemWiseSummary(startDate, endDate) {
 export async function getTotalCostStatement(startDate, endDate) {
   const snap = await getDocs(query(collection(db, "costs"), orderBy("date", "desc")));
   const rows = snap.docs
-    .map((d) => ({ id: d.id, ...d.data() }))
+    .map((d) => ({ id: d.id, ...d.data() })).filter(liveRow)
     .filter((c) => (!startDate || c.date >= startDate) && (!endDate || c.date <= endDate));
   const grandTotal = rows.reduce((s, r) => s + (Number(r.amount) || 0), 0);
   return { rows, grandTotal, startDate, endDate };
@@ -162,7 +160,7 @@ export async function getTotalCostStatement(startDate, endDate) {
 export async function getItemWiseIndividual(item, startDate, endDate) {
   const snap = await getDocs(collection(db, "costs"));
   const rows = snap.docs
-    .map((d) => ({ id: d.id, ...d.data() }))
+    .map((d) => ({ id: d.id, ...d.data() })).filter(liveRow)
     .filter(
       (c) =>
         c.item === item && (!startDate || c.date >= startDate) && (!endDate || c.date <= endDate)
@@ -176,7 +174,7 @@ export async function getItemWiseIndividual(item, startDate, endDate) {
 export async function getAllBeneficiaryPayments(startDate, endDate) {
   const snap = await getDocs(collection(db, "costs"));
   const costs = snap.docs
-    .map((d) => ({ id: d.id, ...d.data() }))
+    .map((d) => ({ id: d.id, ...d.data() })).filter(liveRow)
     .filter((c) => (!startDate || c.date >= startDate) && (!endDate || c.date <= endDate));
 
   const byBeneficiary = new Map();
@@ -195,7 +193,7 @@ export async function getAllBeneficiaryPayments(startDate, endDate) {
 export async function getBeneficiaryStatement(beneficiary, startDate, endDate) {
   const snap = await getDocs(collection(db, "costs"));
   const rows = snap.docs
-    .map((d) => ({ id: d.id, ...d.data() }))
+    .map((d) => ({ id: d.id, ...d.data() })).filter(liveRow)
     .filter(
       (c) =>
         c.beneficiary === beneficiary &&
@@ -210,7 +208,7 @@ export async function getBeneficiaryStatement(beneficiary, startDate, endDate) {
 /** List of distinct beneficiary names seen so far — for the picker dropdown. */
 export async function getKnownBeneficiaries() {
   const snap = await getDocs(collection(db, "costs"));
-  const names = new Set(snap.docs.map((d) => d.data().beneficiary).filter(Boolean));
+  const names = new Set(snap.docs.map((d) => d.data()).filter(liveRow).map((x) => x.beneficiary).filter(Boolean));
   return [...names].sort();
 }
 
@@ -241,7 +239,7 @@ export async function computeDepositsAndDues() {
   return {
     rows: summary.perMember.map((m) => ({ name: m.name, deposit: m.deposit, due: m.due })),
     totalDeposit: summary.totalDeposit,
-    totalDue: summary.perMember.reduce((s, m) => s + m.due, 0),
+    totalDue: summary.perMember.reduce((s, m) => s + Math.max(0, m.due), 0), // অগ্রিম (ঋণাত্মক) অন্যের বকেয়া ঢাকবে না (C-02)
   };
 }
 
@@ -251,8 +249,8 @@ export async function getCashVoucherReport() {
     getDocs(query(collection(db, "vouchers"), orderBy("date", "desc"))),
     getDocs(query(collection(db, "cheques"), orderBy("date", "desc"))),
   ]);
-  const vouchers = vSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-  const cheques = cSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const vouchers = vSnap.docs.map((d) => ({ id: d.id, ...d.data() })).filter(liveRow);
+  const cheques = cSnap.docs.map((d) => ({ id: d.id, ...d.data() })).filter(liveRow);
   const totalVouchers = vouchers.reduce((s, v) => s + (Number(v.amount) || 0), 0);
   const totalCheques = cheques.reduce((s, c) => s + (Number(c.amount) || 0), 0);
   return { vouchers, cheques, totalVouchers, totalCheques };
@@ -265,7 +263,7 @@ export async function getMemberStatementData(memberId) {
     getDocs(query(collection(db, "deposits"), where("memberId", "==", memberId), orderBy("date", "desc"))),
   ]);
   const profile = profileSnap.exists() ? { id: profileSnap.id, ...profileSnap.data() } : null;
-  const deposits = depositsSnap.docs.map((d) => ({ id: d.id, ...d.data() })).reverse();
+  const deposits = depositsSnap.docs.map((d) => ({ id: d.id, ...d.data() })).filter(liveRow).reverse();
   return { profile, deposits };
 }
 
@@ -283,7 +281,7 @@ export async function computeOwnMemberSummary(uid) {
   ]);
 
   const profile = profileSnap.exists() ? profileSnap.data() : {};
-  const deposits = depositsSnap.docs.map((d) => ({ id: d.id, ...d.data() })).reverse();
+  const deposits = depositsSnap.docs.map((d) => ({ id: d.id, ...d.data() })).filter(liveRow).reverse();
   const { due, totalRequired, totalPaid } = computeInstallmentDue({ id: uid, totalShare: profile.totalShare }, deposits, plan);
 
   return {

@@ -2,9 +2,10 @@ import { db, collection, getDocs, updateDoc, doc, query, orderBy } from "../fire
 import { fmtDate, toast } from "../utils.js";
 import { t, getLang } from "../i18n.js";
 
+import { html, raw } from "../core/html.js";
 export async function render(root, identity) {
   const en = getLang() === "en";
-  root.innerHTML = `
+  root.innerHTML = html`
     <h1>${t("messages")}</h1>
     <div class="panel"><div id="msgList"></div></div>
   `;
@@ -14,20 +15,20 @@ export async function render(root, identity) {
     const messages = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     const list = document.getElementById("msgList");
     if (!messages.length) {
-      list.innerHTML = `<div class="empty-state">${t("noMessagesYet")}</div>`;
+      list.innerHTML = html`<div class="empty-state">${t("noMessagesYet")}</div>`;
       return;
     }
     list.innerHTML = messages
       .map(
-        (m) => `<div class="panel" style="margin-bottom:12px;">
+        (m) => html`<div class="panel" style="margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;">
           <strong>${m.fromName || (en ? "Member" : "সদস্য")}</strong>
           <span class="muted">${fmtDate(m.createdAt)} · ${m.status === "answered" ? "✅ " + t("answeredStatus") : "🟡 " + t("pendingStatus")}</span>
         </div>
         <p style="margin:8px 0;">${m.text}</p>
         ${(m.replies || [])
-          .map((r) => `<div class="muted" style="padding-left:14px;border-left:2px solid var(--line);margin:6px 0;">↳ ${r.text}</div>`)
-          .join("")}
+          .map((r) => html`<div class="muted" style="padding-left:14px;border-left:2px solid var(--line);margin:6px 0;">↳ ${r.text}</div>`)
+          }
         <form data-reply="${m.id}" class="form-grid" style="margin-top:10px;">
           <div style="grid-column:1/-1"><input type="text" name="reply" placeholder="${t("writeReply")}" /></div>
           <div style="grid-column:1/-1" class="btn-row"><button type="submit" class="btn-primary" style="padding:6px 14px;">${t("sendBtn")}</button></div>

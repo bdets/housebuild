@@ -2,10 +2,12 @@ import { db, collection, getDocs, addDoc, deleteDoc, doc, query, orderBy, server
 import { money, fmtDate, todayISO, toast, fillDatalist } from "../utils.js";
 import { exportVoucherPDF } from "../print.js";
 import { logActivity } from "../activity.js";
+import { voidRecord } from "../void.js";
 import { t } from "../i18n.js";
 
+import { html, raw } from "../core/html.js";
 export async function render(root, identity) {
-  root.innerHTML = `
+  root.innerHTML = html`
     <h1>${t("vouchers")}</h1>
     <div class="panel">
       <h2>${t("newVoucher")}</h2>
@@ -63,12 +65,12 @@ export async function render(root, identity) {
     document.getElementById("voucherEmpty").style.display = allVouchers.length ? "none" : "block";
     tbody.innerHTML = allVouchers
       .map(
-        (v) => `<tr>
+        (v) => html`<tr>
         <td>${v.voucherNo}</td><td>${fmtDate(v.date)}</td><td>${v.description}</td>
         <td>${v.chequeNo || "—"}</td><td class="num">${money(v.amount)}</td>
         <td>
           <button class="btn-ghost" data-print="${v.id}" style="padding:4px 10px;">${t("a4Print")}</button>
-          <button class="btn-danger" data-del="${v.id}" style="padding:4px 10px;">${t("delete")}</button>
+          ${v.status === "void" ? html`<span class="pill pill-void">${t("statusVoid")}</span>` : html`<button class="btn-danger" data-void="${v.id}" data-vlabel="${v.voucherNo || ""} ${v.amount}" style="padding:4px 10px;">${t("voidAction")}</button>`}
         </td>
       </tr>`
       )
@@ -76,11 +78,9 @@ export async function render(root, identity) {
     tbody.querySelectorAll("[data-print]").forEach((btn) => {
       btn.addEventListener("click", () => exportVoucherPDF(allVouchers.find((x) => x.id === btn.dataset.print)));
     });
-    tbody.querySelectorAll("[data-del]").forEach((btn) => {
+    tbody.querySelectorAll("[data-void]").forEach((btn) => {
       btn.addEventListener("click", async () => {
-        if (!confirm(t("confirmDelete"))) return;
-        await deleteDoc(doc(db, "vouchers", btn.dataset.del));
-        toast(t("deleted"));
+        if (!(await voidRecord("vouchers", btn.dataset.void, btn.dataset.vlabel))) return;
         loadVouchers();
       });
     });
@@ -117,18 +117,16 @@ export async function render(root, identity) {
     document.getElementById("chequeEmpty").style.display = allCheques.length ? "none" : "block";
     tbody.innerHTML = allCheques
       .map(
-        (c) => `<tr>
+        (c) => html`<tr>
         <td>${c.chequeNo}</td><td>${fmtDate(c.date)}</td><td class="num">${money(c.amount)}</td>
         <td>${c.voucherNo || "—"}</td>
-        <td><button class="btn-danger" data-delc="${c.id}" style="padding:4px 10px;">${t("delete")}</button></td>
+        <td>${c.status === "void" ? html`<span class="pill pill-void">${t("statusVoid")}</span>` : html`<button class="btn-danger" data-void="${c.id}" data-vlabel="${c.chequeNo || ""} ${c.amount}" style="padding:4px 10px;">${t("voidAction")}</button>`}</td>
       </tr>`
       )
       .join("");
-    tbody.querySelectorAll("[data-delc]").forEach((btn) => {
+    tbody.querySelectorAll("[data-void]").forEach((btn) => {
       btn.addEventListener("click", async () => {
-        if (!confirm(t("confirmDelete"))) return;
-        await deleteDoc(doc(db, "cheques", btn.dataset.delc));
-        toast(t("deleted"));
+        if (!(await voidRecord("cheques", btn.dataset.void, btn.dataset.vlabel))) return;
         loadCheques();
       });
     });

@@ -3,9 +3,10 @@ import { money } from "../utils.js";
 import { exportBalanceReportPDF } from "../print.js";
 import { t, getLang } from "../i18n.js";
 
+import { html, raw } from "../core/html.js";
 export async function render(root) {
   const en = getLang() === "en";
-  root.innerHTML = `<h1>${t("dashboard")}</h1><p class="muted">${en ? "Loading all figures..." : "সব হিসাব লোড হচ্ছে..."}</p>`;
+  root.innerHTML = html`<h1>${t("dashboard")}</h1><p class="muted">${en ? "Loading all figures..." : "সব হিসাব লোড হচ্ছে..."}</p>`;
 
   // Due is now computed from the installment plan (see Set Installments +
   // src/reports.js computeInstallmentDue) — members read config/
@@ -13,7 +14,7 @@ export async function render(root) {
   // to publish a cost-per-share value for them anymore.
   const summary = await computeBalanceSummary();
 
-  root.innerHTML = `
+  root.innerHTML = html`
     <h1>${t("dashboard")}</h1>
     <p class="muted">${t("liveCalcNote")}</p>
     <div class="cards">
@@ -35,13 +36,13 @@ export async function render(root) {
           <tbody>
             ${summary.perMember
               .map(
-                (m) => `<tr>
+                (m) => html`<tr>
                 <td>${m.name}</td><td class="num">${m.share ?? ""}</td>
                 <td class="num">${money(m.demand)}</td><td class="num">${money(m.deposit)}</td>
                 <td class="num" style="${m.due > 0 ? "color:var(--danger);font-weight:600;" : "color:var(--ok);"}">${money(m.due)}</td>
               </tr>`
               )
-              .join("")}
+              }
           </tbody>
         </table>
       </div>

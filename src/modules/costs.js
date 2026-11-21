@@ -2,8 +2,10 @@ import { db, collection, getDocs, addDoc, deleteDoc, doc, query, orderBy, server
 import { money, fmtDate, todayISO, toast, fillDatalist } from "../utils.js";
 import { getCostItems } from "../config-lists.js";
 import { logActivity } from "../activity.js";
+import { voidRecord } from "../void.js";
 import { t, getLang } from "../i18n.js";
 
+import { html, raw } from "../core/html.js";
 const PAYMENT_METHODS = ["CASH", "Transfer", "Cheque"];
 
 async function loadAllCosts() {
@@ -12,21 +14,19 @@ async function loadAllCosts() {
 }
 
 function costRowHtml(c) {
-  return `<tr>
+  return html`<tr>
     <td>${fmtDate(c.date)}</td><td>${c.item || ""}</td><td>${c.beneficiary || ""}</td>
     <td><span class="pill pill-${(c.paymentMethod || "").toLowerCase()}">${c.paymentMethod || ""}</span></td>
     <td>${c.chequeNo || c.chalanNo || "—"}</td><td class="num">${money(c.amount)}</td>
     <td>${c.remarks || ""}</td>
-    <td><button class="btn-danger" data-del="${c.id}" style="padding:4px 10px;">${t("delete")}</button></td>
+    <td>${c.status === "void" ? html`<span class="pill pill-void">${t("statusVoid")}</span>` : html`<button class="btn-danger" data-void="${c.id}" data-vlabel="${c.item || ""} ${c.amount}" style="padding:4px 10px;">${t("voidAction")}</button>`}</td>
   </tr>`;
 }
 
 function wireRowButtons(tbody, onChange) {
-  tbody.querySelectorAll("[data-del]").forEach((btn) => {
+  tbody.querySelectorAll("[data-void]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      if (!confirm(t("confirmDelete"))) return;
-      await deleteDoc(doc(db, "costs", btn.dataset.del));
-      toast(t("deleted"));
+      if (!(await voidRecord("costs", btn.dataset.void, btn.dataset.vlabel))) return;
       onChange();
     });
   });
@@ -37,17 +37,17 @@ export async function renderEntry(root, identity) {
   const en = getLang() === "en";
   const items = await getCostItems();
 
-  root.innerHTML = `
+  root.innerHTML = html`
     <h1>${t("costEntry")}</h1>
     <div class="panel">
       <form id="costForm" class="form-grid">
         <div><label>${t("date")} *</label><input type="date" name="date" value="${todayISO()}" required /></div>
-        <div><label>${t("item")} *</label><select name="item" required>${items.map((i) => `<option value="${i}">${i}</option>`).join("")}</select></div>
+        <div><label>${t("item")} *</label><select name="item" required>${items.map((i) => html`<option value="${i}">${i}</option>`)}</select></div>
         <div><label>${t("beneficiary")} *</label>
           <input type="text" name="beneficiary" list="beneficiarySuggestions" autocomplete="off" required />
           <datalist id="beneficiarySuggestions"></datalist>
         </div>
-        <div><label>${t("paymentMethod")} *</label><select name="paymentMethod" required>${PAYMENT_METHODS.map((p) => `<option value="${p}">${p}</option>`).join("")}</select></div>
+        <div><label>${t("paymentMethod")} *</label><select name="paymentMethod" required>${PAYMENT_METHODS.map((p) => html`<option value="${p}">${p}</option>`)}</select></div>
         <div><label>${t("chequeNo")}</label><input type="text" name="chequeNo" /></div>
         <div><label>${t("chalanNo")}</label><input type="text" name="chalanNo" /></div>
         <div><label>${t("amount")} (৳) *</label><input type="number" name="amount" min="0" step="1" required /></div>
@@ -108,12 +108,12 @@ export async function renderList(root) {
   const en = getLang() === "en";
   const items = await getCostItems();
 
-  root.innerHTML = `
+  root.innerHTML = html`
     <h1>${t("costEntryList")}</h1>
     <div class="panel">
       <div class="form-grid" style="margin-bottom:14px; max-width:320px;">
         <div><label>${t("filterByItem")}</label><select id="filterItem">
-          <option value="">${t("allItems")}</option>${items.map((i) => `<option value="${i}">${i}</option>`).join("")}
+          <option value="">${t("allItems")}</option>${items.map((i) => html`<option value="${i}">${i}</option>`)}
         </select></div>
       </div>
       <div class="table-wrap"><table>

@@ -133,6 +133,65 @@ messages/{id}   { fromUid, fromName, text, status, replies: [...], createdAt }
 - `src/config.js`, `.gitignore` — see `SETUP-BANGLA.md` for the full
   deploy walkthrough (GitHub Pages, no build step)
 
+## v2.3 additions
+
+- **Shareholder Entry** (`src/modules/shareholder-entry.js`, Entry System,
+  new `shareholders` permission module): a detailed profile form for an
+  existing member account — father's/mother's/spouse's name, current and
+  permanent address, mobile, WhatsApp, and a photo (same client-side
+  resize-to-data-URL approach as the org logo, no Storage bucket needed).
+- **Accordion nav is now exclusive**: opening one group/subgroup closes its
+  siblings at the same level (`src/ui-shell.js`, a `toggle` listener per
+  `<details>` that closes `:scope > details` siblings) — matches the
+  request that clicking one menu item collapses the others.
+- **Set Installments now drives Due** (`src/reports.js` `computeInstallmentDue`,
+  `src/config-lists.js`, `src/modules/installments-config.js`): the plan's
+  columns are now Serial/Installment/Amount (per share)/Initial Date/Final
+  Date/Fine/Remarks. Payments are applied to steps **in order** (step 1
+  must be filled before anything counts toward step 2) rather than matched
+  by the free-text Details label — so the label can stay flexible without
+  breaking the math. Once a step's Final Date passes with it still unpaid,
+  its monthly Fine is added to that shareholder's Due automatically for
+  every whole month that goes by, until it's paid off. This replaces the
+  old "cost-per-share × share" Due estimate everywhere (dashboard, member's
+  own view, Shareholders List, Deposits & Dues) — cost-per-share is still
+  shown on the dashboard, just as an informational stat now, not the Due
+  formula. **This is a real behavior/formula change — please check a few
+  members' Due figures against what you expect once it's live.**
+- **Role labels renamed, permissions unchanged**: "Director" now displays
+  as **Admin**, and "Admin" now displays as **Entry User** — this is
+  display-only (`src/roles.js`); the underlying Firestore role values
+  (`director`/`admin`) and every rule/permission tied to them are
+  untouched, so nothing about who-can-do-what changed.
+- **My Profile** (`src/modules/profile.js`, plus a matching section on the
+  member page): anyone signed in can change their own password
+  (re-authenticates with their current password first, then
+  `updatePassword` — the standard, Firebase-supported self-service flow;
+  this is different from the Users tab's "send a reset email" for
+  resetting *someone else's* password).
+- **Auto-backup on logout** for Entry User and Admin (not Super Admin):
+  logging out now downloads a full JSON backup first, named
+  `BH-YYYY-MM-DD_HH-MM-SS.json` (`src/backup-core.js`, shared by both the
+  Backup module and this auto-download). Best-effort — a failed backup
+  never blocks the actual sign-out.
+- **Activity Log** (Settings → Activity Log, Director/Super Admin only):
+  logs login/logout and the main entry actions (deposit/cost/voucher/
+  cheque/notice/post added, account created/activated/deactivated,
+  password changed, settings/installment-plan/work-items changed,
+  shareholder profile updated) for everyone **except** Super Admin, whose
+  actions are never logged, per the request. **Not yet exhaustive** —
+  deletions and a few less-common actions aren't logged yet; tell me if
+  you want fuller coverage.
+- `firestore.rules`: broadened several read rules from "only if you have
+  this specific module" to "any active staff member" (`isStaffAny()`) for
+  `users` (list), `deposits`, `costs`, `vouchers`, `cheques` — needed so
+  that *every* Entry User/Admin's logout-triggered backup actually
+  succeeds regardless of which specific modules they were assigned, not
+  just module-holders. Writes are still module-gated as before; this only
+  loosened reads. Added `activityLog` (create by anyone non-superAdmin,
+  read by Director/Super Admin only) and tightened `config/installmentPlan`
+  /`config/costItems` further to each feed its own module.
+
 ## v2.2 additions — nav restructure, more reports, Posts
 
 - **Sidebar is now a 3-group accordion**: ড্যাশবোর্ড, then **ENTRY SYSTEM**
@@ -227,3 +286,14 @@ messages/{id}   { fromUid, fromName, text, status, replies: [...], createdAt }
   toasts, placeholders) still default to Bengali regardless of the toggle
 - An audit/edit-history log
 - Migrating your original Darul Barakah spreadsheet data into this schema
+
+
+## Phase 1A — Safety Hotfix (এই সংস্করণ)
+- নিরাপত্তা: `firestore.rules` পুনর্লিখিত (config wildcard বাতিল, self-update সীমিত, Director সীমিত, signed-in ≠ authorized, posts/notices/messages/activityLog সংশোধিত)।
+- XSS: `src/core/html.js` (`html` tagged template, `raw`, `safeUrl`); সব template escape; `toast` textContent; posts লিংক শুধু https।
+- আর্থিক রেকর্ড: মোছা নয়, কারণসহ "বাতিল" (`src/void.js`); যোগফলে বাতিল বাদ (`src/core/records.js` liveRow)।
+- ডায়ালগ: `src/modal.js` — native confirm/prompt নেই।
+- লগআউট: Admin/Entry User-কে ব্যাকআপ হ্যাঁ/না প্রশ্ন; ব্যাকআপে কী বাদ গেল `_meta.skipped`-এ।
+- তারিখ: `src/core/dates.js` — ঢাকার ক্যালেন্ডার তারিখ; মাস-গণনা ঢাকা-ভিত্তিক।
+- হিসাব: Individual Statement-এ প্রকৃত Due; মোট বকেয়া শুধু ধনাত্মক বকেয়ার যোগ।
+- বিস্তারিত পরীক্ষা ও rollback: `PHASE-1A-QA-BANGLA.md`।

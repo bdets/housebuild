@@ -1,4 +1,5 @@
 import { db, DEFAULT_ORG, doc, getDoc } from "./firebase.js";
+import { safeImgSrc } from "./core/html.js";
 
 let cached = null;
 let inflight = null;
@@ -18,6 +19,8 @@ export async function getOrg(forceRefresh = false) {
     try {
       const snap = await getDoc(doc(db, "config", "org"));
       cached = snap.exists() ? { ...DEFAULT_ORG, ...snap.data() } : DEFAULT_ORG;
+      // লোগো শুধু বৈধ base64 ছবি হলে গ্রহণ (অন্য কিছু → বাদ)
+      cached = { ...cached, logoDataUrl: safeImgSrc(cached.logoDataUrl) };
     } catch (e) {
       cached = DEFAULT_ORG; // offline on first-ever load, etc.
     }

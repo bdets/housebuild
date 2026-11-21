@@ -1,27 +1,29 @@
+import { askConfirm } from "../modal.js";
 import { db, doc, collection, writeBatch } from "../firebase.js";
 import { toast } from "../utils.js";
 import { t } from "../i18n.js";
 import { BACKUP_COLLECTIONS, SHEET_NAME, fetchAllData, triggerDownload, backupFileStamp } from "../backup-core.js";
 
+import { html, raw } from "../core/html.js";
 export async function render(root, identity) {
-  const canImport = identity.role === "superAdmin" || identity.role === "director";
+  const canImport = identity.role === "superAdmin";
 
-  root.innerHTML = `
+  root.innerHTML = html`
     <h1>${t("backup")}</h1>
     <div class="panel">
       <h2>${t("jsonBackup")}</h2>
       <div class="btn-row">
         <button id="jsonExportBtn" class="btn-primary">${t("jsonExport")}</button>
-        ${canImport ? `<label class="btn-ghost" style="display:inline-flex;align-items:center;cursor:pointer;">${t("jsonImport")} <input type="file" id="jsonImportInput" accept=".json" style="display:none;" /></label>` : ""}
+        ${canImport ? html`<label class="btn-ghost" style="display:inline-flex;align-items:center;cursor:pointer;">${t("jsonImport")} <input type="file" id="jsonImportInput" accept=".json" style="display:none;" /></label>` : ""}
       </div>
     </div>
     <div class="panel">
       <h2>${t("excelBackup")}</h2>
       <div class="btn-row">
         <button id="excelExportBtn" class="btn-gold">${t("excelExport")}</button>
-        ${canImport ? `<label class="btn-ghost" style="display:inline-flex;align-items:center;cursor:pointer;">${t("excelImport")} <input type="file" id="excelImportInput" accept=".xlsx" style="display:none;" /></label>` : ""}
+        ${canImport ? html`<label class="btn-ghost" style="display:inline-flex;align-items:center;cursor:pointer;">${t("excelImport")} <input type="file" id="excelImportInput" accept=".xlsx" style="display:none;" /></label>` : ""}
       </div>
-      ${!canImport ? `<p class="muted" style="margin-top:10px;">${t("importRestricted")}</p>` : ""}
+      ${!canImport ? html`<p class="muted" style="margin-top:10px;">${t("importRestricted")}</p>` : ""}
     </div>
     <div id="backupStatus" class="muted"></div>
   `;
@@ -43,7 +45,7 @@ export async function render(root, identity) {
     const data = await fetchAllData();
     const wb = window.XLSX.utils.book_new();
     for (const name of BACKUP_COLLECTIONS) {
-      window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.json_to_sheet(data[name]), SHEET_NAME[name]);
+      window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.json_to_sheet(data[name] || []), SHEET_NAME[name]);
     }
     window.XLSX.writeFile(wb, `${backupFileStamp()}.xlsx`);
     document.getElementById("backupStatus").textContent = "";
@@ -55,7 +57,7 @@ export async function render(root, identity) {
     jsonImportInput.addEventListener("change", async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      if (!confirm("এই JSON ফাইলের ডেটা বর্তমান ডেটাবেসে যোগ/আপডেট হবে। নিশ্চিত? / This JSON file's data will be added/updated into the current database. Continue?")) {
+      if (!(await askConfirm({ title: t("jsonImport"), message: "এই JSON ফাইলের ডেটা বর্তমান ডেটাবেসে যোগ/আপডেট হবে। নিশ্চিত? / This JSON file's data will be added/updated into the current database. Continue?", yesLabel: t("yes"), noLabel: t("cancel") }))) {
         e.target.value = "";
         return;
       }
@@ -74,7 +76,7 @@ export async function render(root, identity) {
     excelImportInput.addEventListener("change", async (e) => {
       const file = e.target.files[0];
       if (!file || !window.XLSX) return;
-      if (!confirm("এই Excel ফাইলের ডেটা বর্তমান ডেটাবেসে যোগ/আপডেট হবে। নিশ্চিত? / This Excel file's data will be added/updated into the current database. Continue?")) {
+      if (!(await askConfirm({ title: t("jsonImport"), message: "এই Excel ফাইলের ডেটা বর্তমান ডেটাবেসে যোগ/আপডেট হবে। নিশ্চিত? / This Excel file's data will be added/updated into the current database. Continue?", yesLabel: t("yes"), noLabel: t("cancel") }))) {
         e.target.value = "";
         return;
       }

@@ -3,12 +3,13 @@ import { toast } from "../utils.js";
 import { logActivity } from "../activity.js";
 import { t, getLang } from "../i18n.js";
 
+import { html, raw } from "../core/html.js";
 export async function render(root, identity) {
   const en = getLang() === "en";
   let items = await getCostItems();
 
   function paint() {
-    root.innerHTML = `
+    root.innerHTML = html`
       <h1>${t("workItemsList")}</h1>
       <p class="muted">${
         en
@@ -23,13 +24,12 @@ export async function render(root, identity) {
             items.length
               ? items
                   .map(
-                    (item, i) => `<div class="form-grid" style="margin-bottom:8px;grid-template-columns:1fr auto;">
+                    (item, i) => html`<div class="form-grid" style="margin-bottom:8px;grid-template-columns:1fr auto;">
                     <input type="text" data-idx="${i}" value="${item}" />
                     <button class="btn-danger" data-del="${i}" style="padding:8px 14px;">${t("delete")}</button>
                   </div>`
                   )
-                  .join("")
-              : `<div class="empty-state">${t("noItemsYet")}</div>`
+              : html`<div class="empty-state">${t("noItemsYet")}</div>`
           }
         </div>
         <div class="form-grid" style="margin-top:10px;">
